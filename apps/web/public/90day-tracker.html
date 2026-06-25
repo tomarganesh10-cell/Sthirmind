@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>5H SthirMind | 90-Day Sprint Tracker</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --navy:#1B3A6B; --gold:#F4A261; --heart:#E63946; --hope:#457B9D;
+  --health:#52B788; --help:#7B2D8B; --bg:#F0F4F8; --card:#fff;
+  --text:#1A202C; --muted:#718096; --border:#E2E8F0;
+  --ok:#48BB78; --warn:#ECC94B; --red:#FC8181;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* ── HEADER ── */
+.header{background:linear-gradient(135deg,var(--navy),#2C5F9E);color:#fff;padding:16px 20px;position:sticky;top:0;z-index:100;box-shadow:0 4px 20px rgba(0,0,0,.2)}
+.hinner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.brand-name{font-size:20px;font-weight:800;letter-spacing:.5px}
+.brand-sub{font-size:11px;opacity:.7;letter-spacing:1.5px;margin-top:2px}
+.day-pill{background:rgba(255,255,255,.12);border-radius:12px;padding:10px 18px;text-align:center;backdrop-filter:blur(8px)}
+.day-big{font-size:30px;font-weight:900;color:var(--gold);line-height:1}
+.day-lbl{font-size:10px;opacity:.7;letter-spacing:1px;margin-top:2px}
+.sprint-meta{display:flex;flex-direction:column;gap:4px;min-width:180px}
+.sprint-lbl{font-size:11px;opacity:.7;display:flex;justify-content:space-between}
+.pbar{height:8px;background:rgba(255,255,255,.2);border-radius:4px;overflow:hidden}
+.pbar-fill{height:100%;background:var(--gold);border-radius:4px;transition:width .6s}
+.phase-tag{font-size:11px;font-weight:700;color:var(--gold);margin-top:4px}
+
+/* ── LAYOUT ── */
+.main{max-width:1200px;margin:0 auto;padding:20px}
+.sec-title{font-size:15px;font-weight:700;color:var(--navy);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.row{display:grid;gap:16px;margin-bottom:24px}
+.row-3{grid-template-columns:repeat(3,1fr)}
+.row-4{grid-template-columns:repeat(4,1fr)}
+.row-2{grid-template-columns:repeat(2,1fr)}
+
+/* ── KPI CARDS ── */
+.kpi-card{background:var(--card);border-radius:14px;padding:16px;box-shadow:0 2px 12px rgba(0,0,0,.07);border-left:4px solid var(--navy);cursor:pointer;transition:transform .2s}
+.kpi-card:hover{transform:translateY(-3px)}
+.kc-label{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);font-weight:600}
+.kc-val{font-size:26px;font-weight:900;color:var(--navy);margin:4px 0 2px}
+.kc-target{font-size:11px;color:var(--muted)}
+.kc-bar{height:5px;background:var(--border);border-radius:3px;margin-top:8px;overflow:hidden}
+.kc-fill{height:100%;border-radius:3px;transition:width .5s}
+.kc-pct{font-size:11px;font-weight:700;margin-top:4px}
+
+/* ── BLOCK CARDS ── */
+.block-card{background:var(--card);border-radius:14px;padding:16px;box-shadow:0 2px 12px rgba(0,0,0,.07);text-align:center;position:relative;overflow:hidden}
+.block-card.current::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--gold)}
+.block-num{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:600}
+.block-name{font-size:13px;font-weight:700;color:var(--navy);margin:4px 0}
+.block-dates{font-size:11px;color:var(--muted);margin-bottom:10px}
+.ring-wrap{position:relative;width:64px;height:64px;margin:0 auto}
+.ring-pct{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:13px;font-weight:800;color:var(--navy)}
+.block-tasks-done{font-size:11px;color:var(--muted);margin-top:6px}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.tab{padding:7px 16px;border:1.5px solid var(--border);border-radius:20px;background:#fff;cursor:pointer;font-size:13px;font-weight:500;transition:all .2s}
+.tab.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.tab:hover:not(.on){border-color:var(--navy);color:var(--navy)}
+
+/* ── DAY CARDS ── */
+.day-card{background:var(--card);border-radius:12px;margin-bottom:10px;box-shadow:0 1px 8px rgba(0,0,0,.06);overflow:hidden}
+.day-head{padding:13px 16px;cursor:pointer;display:flex;align-items:center;gap:12px;user-select:none}
+.day-head:hover{background:#FAFBFC}
+.day-head.today{background:linear-gradient(90deg,rgba(244,162,97,.12),rgba(27,58,107,.04))}
+.day-head.all-done{background:#F0FFF4}
+.day-num{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0;background:var(--border);color:var(--muted)}
+.day-num.today{background:var(--gold);color:#fff}
+.day-num.done{background:var(--ok);color:#fff}
+.day-num.milestone{background:var(--navy);color:#fff}
+.day-num.future{background:var(--border);color:var(--muted)}
+.day-info{flex:1}
+.day-title{font-size:13px;font-weight:700}
+.day-date{font-size:11px;color:var(--muted);margin-top:1px}
+.day-right{display:flex;align-items:center;gap:8px}
+.done-badge{background:#F0FFF4;color:var(--ok);font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px}
+.today-badge{background:var(--gold);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px}
+.ms-badge{background:var(--navy);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px}
+.chevron{font-size:14px;color:var(--muted);transition:transform .2s;flex-shrink:0}
+.day-card.open .chevron{transform:rotate(180deg)}
+
+.day-body{display:none;padding:0 16px 14px;border-top:1px solid var(--border)}
+.day-card.open .day-body{display:block}
+.ms-banner{background:linear-gradient(90deg,var(--navy),#2C5F9E);color:#fff;padding:8px 12px;margin:10px -16px;font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px}
+
+.task-row{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.task-row:last-child{border-bottom:none}
+input[type=checkbox].tc{width:18px;height:18px;border:2px solid var(--border);border-radius:4px;cursor:pointer;flex-shrink:0;margin-top:2px;appearance:none;-webkit-appearance:none;transition:all .2s;position:relative}
+input[type=checkbox].tc:checked{background:var(--ok);border-color:var(--ok)}
+input[type=checkbox].tc:checked::after{content:'✓';color:#fff;font-size:11px;font-weight:800;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}
+.task-text{font-size:13px;line-height:1.5;flex:1}
+.task-text.crossed{text-decoration:line-through;color:var(--muted)}
+.tag{padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;flex-shrink:0;margin-top:2px}
+.tag-v{background:#EBF8FF;color:#2B6CB0}
+.tag-p{background:#F0FFF4;color:#276749}
+.tag-c{background:#FFF5F5;color:#C53030}
+.tag-b{background:#FAF5FF;color:#6B46C1}
+.tag-a{background:#FFFBEB;color:#744210}
+
+/* ── CHARTS ── */
+.chart-card{background:var(--card);border-radius:14px;padding:18px;box-shadow:0 2px 12px rgba(0,0,0,.07)}
+.chart-title{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:14px}
+
+/* ── 5H CHECKIN ── */
+.fiveh{background:linear-gradient(135deg,var(--navy),#2C5F9E);border-radius:14px;padding:20px;color:#fff;margin-bottom:24px}
+.fiveh h3{font-size:14px;font-weight:700;text-align:center;margin-bottom:16px;opacity:.9;letter-spacing:.5px}
+.fh-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.fh-item{text-align:center}
+.fh-icon{font-size:26px}
+.fh-name{font-size:10px;opacity:.7;margin-top:4px}
+.stars{display:flex;justify-content:center;gap:2px;margin-top:4px}
+.star{font-size:14px;cursor:pointer;opacity:.35;transition:opacity .15s}
+.star.lit{opacity:1}
+
+/* ── KPI MODAL ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:center;justify-content:center;padding:20px}
+.overlay.show{display:flex}
+.modal{background:#fff;border-radius:16px;padding:24px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.modal h3{font-size:18px;font-weight:800;color:var(--navy);margin-bottom:6px}
+.modal p{font-size:13px;color:var(--muted);margin-bottom:16px}
+.modal input{width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:10px;font-size:18px;font-weight:700;outline:none;transition:border-color .2s}
+.modal input:focus{border-color:var(--navy)}
+.mbtns{display:flex;gap:10px;margin-top:16px}
+.btn{padding:11px 20px;border-radius:10px;border:none;cursor:pointer;font-size:14px;font-weight:700;transition:all .2s}
+.btn-p{background:var(--navy);color:#fff;flex:1}
+.btn-s{background:var(--border);color:var(--text)}
+.btn:hover{opacity:.9}
+
+/* ── RESPONSIVE ── */
+@media(max-width:700px){
+  .row-3,.row-4{grid-template-columns:repeat(2,1fr)}
+  .row-2{grid-template-columns:1fr}
+  .fh-icon{font-size:20px}
+  .fh-name{display:none}
+  .hinner{gap:8px}
+  .day-big{font-size:24px}
+}
+@media(max-width:440px){
+  .row-3,.row-4{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="hinner">
+    <div>
+      <div class="brand-name">5H · SthirMind</div>
+      <div class="brand-sub">AI-POWERED MINDFUL LEADERSHIP</div>
+    </div>
+    <div class="day-pill">
+      <div class="day-big" id="dayNum">1</div>
+      <div class="day-lbl">OF 90 DAYS</div>
+    </div>
+    <div class="sprint-meta">
+      <div class="sprint-lbl"><span>Sprint Progress</span><span id="hPct">0%</span></div>
+      <div class="pbar"><div class="pbar-fill" id="hBar" style="width:0%"></div></div>
+      <div class="phase-tag" id="phaseTag">▶ Block 1: Validate + Build</div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- KPI DASHBOARD -->
+  <div class="sec-title">📊 KPI Dashboard <span style="font-size:12px;font-weight:400;color:var(--muted)">(tap any card to update)</span></div>
+  <div class="row row-4" id="kpiGrid"></div>
+
+  <!-- BLOCK PROGRESS -->
+  <div class="sec-title">🗺️ Sprint Blocks</div>
+  <div class="row row-3" id="blockGrid"></div>
+
+  <!-- 5H DAILY CHECK-IN -->
+  <div class="fiveh">
+    <h3>⚡ 5H DAILY CHECK-IN — How are you showing up today?</h3>
+    <div class="fh-grid">
+      <div class="fh-item"><div class="fh-icon">❤️</div><div class="fh-name">Heart</div><div class="stars" id="stars-heart"></div></div>
+      <div class="fh-item"><div class="fh-icon">🌟</div><div class="fh-name">Hope</div><div class="stars" id="stars-hope"></div></div>
+      <div class="fh-item"><div class="fh-icon">😊</div><div class="fh-name">Happiness</div><div class="stars" id="stars-happy"></div></div>
+      <div class="fh-item"><div class="fh-icon">💪</div><div class="fh-name">Health</div><div class="stars" id="stars-health"></div></div>
+      <div class="fh-item"><div class="fh-icon">🤝</div><div class="fh-name">Help</div><div class="stars" id="stars-help"></div></div>
+    </div>
+  </div>
+
+  <!-- TASKS -->
+  <div class="sec-title">✅ Daily Action Plan</div>
+  <div class="tabs" id="tabs">
+    <div class="tab on" data-filter="all">All 90 Days</div>
+    <div class="tab" data-filter="today">Today</div>
+    <div class="tab" data-filter="week">This Week</div>
+    <div class="tab" data-filter="block1">Block 1 (D1–30)</div>
+    <div class="tab" data-filter="block2">Block 2 (D31–60)</div>
+    <div class="tab" data-filter="block3">Block 3 (D61–90)</div>
+    <div class="tab" data-filter="pending">Pending Only</div>
+  </div>
+  <div id="taskList"></div>
+
+  <!-- CHARTS -->
+  <div class="sec-title mt-24" style="margin-top:24px">📈 Progress Charts</div>
+  <div class="row row-2">
+    <div class="chart-card"><div class="chart-title">Task Completion by Block</div><canvas id="chartBlocks" height="180"></canvas></div>
+    <div class="chart-card"><div class="chart-title">KPI Progress vs Target</div><canvas id="chartKPI" height="180"></canvas></div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- KPI EDIT MODAL -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h3 id="mTitle">Update KPI</h3>
+    <p id="mSub">Enter today's actual value</p>
+    <input type="number" id="mInput" placeholder="0" min="0">
+    <div class="mbtns">
+      <button class="btn btn-s" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-p" onclick="saveKPI()">Save ✓</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════
+// CONFIG
+// ════════════════════════════════════════════════════
+const START = new Date('2026-04-10');
+const today = new Date();
+today.setHours(0,0,0,0);
+const dayNum = Math.max(1, Math.min(90, Math.round((today - START)/(86400000)) + 1));
+
+// ════════════════════════════════════════════════════
+// KPI DEFINITIONS
+// ════════════════════════════════════════════════════
+const KPIS = [
+  {id:'linkedin', label:'LinkedIn Followers', target:10000, color:'var(--hope)', unit:'', icon:'🔗'},
+  {id:'waitlist', label:'Waitlist Signups',   target:2000,  color:'var(--health)',unit:'', icon:'📧'},
+  {id:'convos',   label:'Validation Calls',   target:50,    color:'var(--heart)', unit:'', icon:'🎙️'},
+  {id:'beta',     label:'Beta Users',         target:100,   color:'var(--help)',  unit:'', icon:'👥'},
+  {id:'paying',   label:'Paying Users',       target:150,   color:'var(--gold)',  unit:'', icon:'💳'},
+  {id:'mrr',      label:'MRR (USD)',          target:20000, color:'var(--ok)',    unit:'$',icon:'💰'},
+  {id:'pilots',   label:'Corporate Pilots',   target:5,     color:'var(--navy)',  unit:'', icon:'🏢'},
+  {id:'spend',    label:'Spend (₹ L)',        target:8,     color:'var(--warn)',  unit:'₹',icon:'📉', inverse:true},
+];
+
+// ════════════════════════════════════════════════════
+// TASK DATA — All 90 Days
+// ════════════════════════════════════════════════════
+const DAYS = [
+// BLOCK 1: VALIDATE + BUILD (Day 1–30)
+{d:1, block:1, ms:false, title:'Foundation Day — Domains + LinkedIn + Lists',
+tasks:[
+  {t:'Register sthirmind.com domain', cat:'a'},
+  {t:'Register 5hventures.com domain', cat:'a'},
+  {t:'Write & post LinkedIn Post #1: "What 80 Days of Silence Taught Me About Running a $100M Business"', cat:'c'},
+  {t:'Create master list of 50 leaders to contact (INSEAD / Domino\'s / Dabur / Pidilite / LinkedIn)', cat:'v'},
+  {t:'Set up Claude API account + obtain API keys', cat:'p'},
+  {t:'Update LinkedIn banner with 5H branding', cat:'a'},
+]},
+{d:2, block:1, ms:false, title:'Outreach Sprint + Setup',
+tasks:[
+  {t:'Send personalised outreach to 10 INSEAD GMP alumni', cat:'v'},
+  {t:'Set up Framer or Webflow account for landing page', cat:'p'},
+  {t:'Set up Beehiiv (newsletter) + HubSpot free (CRM) accounts', cat:'a'},
+  {t:'Draft landing page headline + copy', cat:'p'},
+  {t:'LinkedIn Post #2: Your Vipassana origin story', cat:'c'},
+]},
+{d:3, block:1, ms:false, title:'Outreach + Landing Page Build',
+tasks:[
+  {t:'Send outreach to 10 ex-Domino\'s / Jubilant colleagues', cat:'v'},
+  {t:'Book 15 validation calls for Week 1–2', cat:'v'},
+  {t:'Begin landing page build on Framer/Webflow', cat:'p'},
+  {t:'Set up professional email signature', cat:'a'},
+]},
+{d:4, block:1, ms:false, title:'Outreach Round 3 + Product Setup',
+tasks:[
+  {t:'Send outreach to 10 Dabur / Pidilite / Bisleri contacts', cat:'v'},
+  {t:'Continue landing page build — 70% target', cat:'p'},
+  {t:'Set up Stripe + Razorpay accounts', cat:'a'},
+  {t:'LinkedIn Post #3: The 5H Philosophy explained', cat:'c'},
+]},
+{d:5, block:1, ms:false, title:'Outreach Complete + Landing Page Live',
+tasks:[
+  {t:'Send outreach to remaining 10 semi-warm LinkedIn contacts', cat:'v'},
+  {t:'Complete landing page build — deploy with waitlist form', cat:'p'},
+  {t:'Set up Descript account for audio/video creation', cat:'a'},
+  {t:'LinkedIn Post #4: Leadership clarity framework teaser', cat:'c'},
+]},
+{d:6, block:1, ms:false, title:'First Validation Calls',
+tasks:[
+  {t:'Conduct 5 validation calls (use 3 core questions)', cat:'v'},
+  {t:'Document all insights immediately post-call', cat:'v'},
+  {t:'LinkedIn Post #5: Insight from first calls', cat:'c'},
+  {t:'Set up course hosting on Skool or Teachable', cat:'a'},
+]},
+{d:7, block:1, ms:false, title:'Week 1 Review + Calls Continue',
+tasks:[
+  {t:'Conduct 5 more validation calls', cat:'v'},
+  {t:'Week 1 review: domains ✓, landing page ✓, outreach 50 sent ✓', cat:'a'},
+  {t:'Count: waitlist signups so far (target 50+)', cat:'v'},
+  {t:'LinkedIn Post #6: Weekly reflection', cat:'c'},
+  {t:'Vipassana practice — do not skip', cat:'a'},
+]},
+
+// Week 2
+{d:8, block:1, ms:false, title:'Validation Sprint — Week 2',
+tasks:[
+  {t:'Conduct 5 validation calls', cat:'v'},
+  {t:'Begin Claude API MVP integration — set up dev environment', cat:'p'},
+  {t:'LinkedIn Post #7', cat:'c'},
+]},
+{d:9, block:1, ms:false, title:'Calls + Vipassana Community',
+tasks:[
+  {t:'Conduct 5 validation calls', cat:'v'},
+  {t:'Send outreach to 10 Vipassana meditator-leaders', cat:'v'},
+  {t:'LinkedIn Post #8', cat:'c'},
+  {t:'Check waitlist: target 100+ by now', cat:'a'},
+]},
+{d:10, block:1, ms:false, title:'25 Calls Done + MVP Architecture',
+tasks:[
+  {t:'Conduct 5 validation calls — total ~25 done ✓', cat:'v'},
+  {t:'Begin AI coach conversation flow architecture', cat:'p'},
+  {t:'LinkedIn Post #9: Top insight from conversations so far', cat:'c'},
+]},
+{d:11, block:1, ms:false, title:'Pattern Analysis Begins',
+tasks:[
+  {t:'Conduct 5 validation calls', cat:'v'},
+  {t:'Run AI analysis on all conversations so far — identify patterns', cat:'v'},
+  {t:'LinkedIn Post #10', cat:'c'},
+]},
+{d:12, block:1, ms:false, title:'Pain Points Emerging',
+tasks:[
+  {t:'Conduct 5 validation calls', cat:'v'},
+  {t:'Script audio module #1: "Equanimity in a Board Meeting"', cat:'p'},
+  {t:'LinkedIn Post #11', cat:'c'},
+]},
+{d:13, block:1, ms:false, title:'Final Calls + Module Scripts',
+tasks:[
+  {t:'Conduct 5 validation calls', cat:'v'},
+  {t:'Script audio module #2: "Observing Without Reacting"', cat:'p'},
+  {t:'LinkedIn Post #12', cat:'c'},
+]},
+{d:14, block:1, ms:true, title:'🏆 MILESTONE: 50 Validation Conversations Complete',
+tasks:[
+  {t:'✅ MILESTONE: 50 leader conversations completed', cat:'a'},
+  {t:'Full AI analysis of all 50 conversations', cat:'v'},
+  {t:'Document top 5 pain points — these become product modules', cat:'v'},
+  {t:'Vipassana community: 20 meditator-leaders reached ✓', cat:'v'},
+  {t:'LinkedIn Post #13: "What 50 conversations with leaders taught me"', cat:'c'},
+  {t:'Waitlist check: target 200+', cat:'a'},
+]},
+
+// Week 3
+{d:15, block:1, ms:false, title:'Build Sprint — MVP Development Start',
+tasks:[
+  {t:'Begin MVP development: 5H framework programmed into Claude AI', cat:'p'},
+  {t:'Record audio module #1: "Equanimity in a Board Meeting" (Descript)', cat:'p'},
+  {t:'LinkedIn Post #14', cat:'c'},
+]},
+{d:16, block:1, ms:false, title:'5H Framework + Module 2',
+tasks:[
+  {t:'Program 5 Layers of Durable Execution framework into AI coach', cat:'p'},
+  {t:'Script + record audio module #2: "Observing Without Reacting"', cat:'p'},
+  {t:'LinkedIn Post #15', cat:'c'},
+]},
+{d:17, block:1, ms:false, title:'Equanimity Module + AI Build',
+tasks:[
+  {t:'Program Equanimity Under Pressure framework into AI', cat:'p'},
+  {t:'Record audio module #3: "Decision Clarity Under P&L Pressure"', cat:'p'},
+  {t:'LinkedIn Post #16', cat:'c'},
+]},
+{d:18, block:1, ms:false, title:'Early Warning Signals + Module 4',
+tasks:[
+  {t:'Program Early Warning Signals framework into AI coach', cat:'p'},
+  {t:'Record audio module #4: "Managing Team Anxiety"', cat:'p'},
+  {t:'LinkedIn Post #17', cat:'c'},
+]},
+{d:19, block:1, ms:false, title:'Daily Practice Engine Design',
+tasks:[
+  {t:'Design Daily Practice Engine logic (personalised 10-min routines)', cat:'p'},
+  {t:'Record audio module #5: "Leading Through Uncertainty"', cat:'p'},
+  {t:'LinkedIn Post #18', cat:'c'},
+]},
+{d:20, block:1, ms:false, title:'Practice Engine + Module 6',
+tasks:[
+  {t:'Build Daily Practice Engine v1 (calendar + stress level inputs)', cat:'p'},
+  {t:'Record audio module #6: "The 5H Decision Framework"', cat:'p'},
+  {t:'LinkedIn Post #19', cat:'c'},
+]},
+{d:21, block:1, ms:false, title:'Week 3 Review + Corporate List',
+tasks:[
+  {t:'Week 3 review: MVP 60% done, 6 modules recorded', cat:'a'},
+  {t:'Prepare corporate pilot target list (10 companies, warm contacts)', cat:'b'},
+  {t:'Waitlist check: target 300+', cat:'a'},
+  {t:'LinkedIn Post #20', cat:'c'},
+  {t:'Vipassana practice', cat:'a'},
+]},
+
+// Week 4
+{d:22, block:1, ms:false, title:'Build Complete — Modules 7 & 8',
+tasks:[
+  {t:'Record audio module #7: "Building Durable Systems"', cat:'p'},
+  {t:'Record audio module #8: "Founder\'s Equanimity"', cat:'p'},
+  {t:'LinkedIn Post #21', cat:'c'},
+]},
+{d:23, block:1, ms:false, title:'Onboarding Flow Design',
+tasks:[
+  {t:'Design user onboarding flow (5-min AI assessment → Mindful Leadership Score)', cat:'p'},
+  {t:'AI-enhance all 8 audio modules in Descript', cat:'p'},
+  {t:'LinkedIn Post #22', cat:'c'},
+]},
+{d:24, block:1, ms:false, title:'Mindful Leadership Score Feature',
+tasks:[
+  {t:'Build Mindful Leadership Score baseline feature', cat:'p'},
+  {t:'Design daily engagement loop: push → 10-min practice → evening reflection', cat:'p'},
+  {t:'LinkedIn Post #23', cat:'c'},
+]},
+{d:25, block:1, ms:false, title:'MVP Internal Testing',
+tasks:[
+  {t:'MVP v1 internal testing — run through all flows', cat:'p'},
+  {t:'Fix top 3 bugs / friction points', cat:'p'},
+  {t:'LinkedIn Post #24', cat:'c'},
+  {t:'Check waitlist: target 400+', cat:'a'},
+]},
+{d:26, block:1, ms:false, title:'Corporate Pilot Outreach Starts',
+tasks:[
+  {t:'Send corporate pilot outreach to 5 of 10 target companies', cat:'b'},
+  {t:'Finalise beta invitation process + criteria', cat:'p'},
+  {t:'LinkedIn Post #25', cat:'c'},
+]},
+{d:27, block:1, ms:false, title:'Corporate Outreach Round 2',
+tasks:[
+  {t:'Send corporate pilot outreach to remaining 5 target companies', cat:'b'},
+  {t:'Prepare beta onboarding materials', cat:'p'},
+  {t:'LinkedIn Post #26', cat:'c'},
+]},
+{d:28, block:1, ms:false, title:'MVP v1 Complete',
+tasks:[
+  {t:'✅ MVP v1 declared complete', cat:'p'},
+  {t:'Waitlist check: target 500+', cat:'a'},
+  {t:'LinkedIn Post #27: "The product is almost ready"', cat:'c'},
+]},
+{d:29, block:1, ms:false, title:'Pre-Beta Preparation',
+tasks:[
+  {t:'Prepare beta launch email + invitation copy', cat:'c'},
+  {t:'Select top 100 waitlist members for beta', cat:'p'},
+  {t:'LinkedIn Post #28', cat:'c'},
+]},
+{d:30, block:1, ms:true, title:'🏆 MILESTONE: Block 1 Complete',
+tasks:[
+  {t:'✅ BLOCK 1 MILESTONE REVIEW', cat:'a'},
+  {t:'Check: 500+ waitlist ✓ | MVP ready ✓ | 50 convos ✓ | 2,000+ LI followers ✓', cat:'a'},
+  {t:'LinkedIn followers count (target 2,000+)', cat:'a'},
+  {t:'Spend review: under ₹2.5L so far?', cat:'a'},
+  {t:'LinkedIn Post #29: Block 1 complete reflection', cat:'c'},
+  {t:'Plan Block 2 in detail', cat:'a'},
+]},
+
+// BLOCK 2: SHIP + BETA LAUNCH (Day 31–60)
+{d:31, block:2, ms:false, title:'Beta Launch Day 🚀',
+tasks:[
+  {t:'Send beta invitations to top 100 waitlist members', cat:'p'},
+  {t:'Beta onboarding flow live — test with first 5 users', cat:'p'},
+  {t:'LinkedIn Post #30: "Beta is live"', cat:'c'},
+]},
+{d:32, block:2, ms:false, title:'Beta Monitoring — Day 2',
+tasks:[
+  {t:'Monitor beta onboarding: identify drop-off points', cat:'p'},
+  {t:'Respond personally to first 10 beta users', cat:'v'},
+  {t:'LinkedIn Post #31', cat:'c'},
+]},
+{d:33, block:2, ms:false, title:'First Beta Feedback',
+tasks:[
+  {t:'Collect first beta user feedback (informal calls/messages)', cat:'v'},
+  {t:'Track: DAU, session completion rate', cat:'p'},
+  {t:'LinkedIn Post #32: Early beta user insight', cat:'c'},
+]},
+{d:34, block:2, ms:false, title:'Corporate Pilot Follow-Up',
+tasks:[
+  {t:'Follow up on all 10 corporate pilot outreach (calls/emails)', cat:'b'},
+  {t:'Fix top 1 friction point from beta feedback', cat:'p'},
+  {t:'LinkedIn Post #33', cat:'c'},
+]},
+{d:35, block:2, ms:false, title:'Beta Week 1 Review',
+tasks:[
+  {t:'Week 5 review: beta metrics, corporate pilot responses', cat:'a'},
+  {t:'Fix top 2 friction points from beta', cat:'p'},
+  {t:'LinkedIn Post #34', cat:'c'},
+]},
+{d:36, block:2, ms:false, title:'Leadership Archetype Design',
+tasks:[
+  {t:'Design Leadership Archetype diagnostic (Controller/Avoider/Pleaser/Perfectionist)', cat:'p'},
+  {t:'Beta user community set up (WhatsApp or Skool)', cat:'p'},
+  {t:'LinkedIn Post #35', cat:'c'},
+]},
+{d:37, block:2, ms:false, title:'Content Flywheel Starts',
+tasks:[
+  {t:'Content flywheel: beta user insight → LinkedIn post', cat:'c'},
+  {t:'Corporate pilot proposals drafted for 3–5 companies', cat:'b'},
+  {t:'LinkedIn Post #36', cat:'c'},
+]},
+{d:38, block:2, ms:false, title:'NPS Prep + Archetype Build',
+tasks:[
+  {t:'Set up NPS survey tool (Typeform/Google Forms)', cat:'p'},
+  {t:'Build Leadership Archetype diagnostic v1 in AI coach', cat:'p'},
+  {t:'LinkedIn Post #37', cat:'c'},
+]},
+{d:39, block:2, ms:false, title:'Day 14 NPS Survey Live',
+tasks:[
+  {t:'Send NPS survey to all beta users (Day 14 of beta)', cat:'p'},
+  {t:'Analyse NPS results — target 60+', cat:'v'},
+  {t:'LinkedIn Post #38', cat:'c'},
+]},
+{d:40, block:2, ms:false, title:'NPS Analysis + Corporate Proposals',
+tasks:[
+  {t:'Action NPS feedback: prioritise top 3 improvements', cat:'p'},
+  {t:'Send finalised corporate pilot proposals to 3–5 companies', cat:'b'},
+  {t:'LinkedIn Post #39', cat:'c'},
+  {t:'Waitlist check: target 1,000+', cat:'a'},
+]},
+{d:41, block:2, ms:false, title:'Archetype Diagnostic Live',
+tasks:[
+  {t:'Leadership Archetype diagnostic v1 live in product', cat:'p'},
+  {t:'Corporate pilot follow-up calls (confirmations?)', cat:'b'},
+  {t:'LinkedIn Post #40', cat:'c'},
+]},
+{d:42, block:2, ms:false, title:'Beta Personalisation',
+tasks:[
+  {t:'Personalise programs based on Archetype results for beta users', cat:'p'},
+  {t:'LinkedIn Post #41', cat:'c'},
+]},
+{d:43, block:2, ms:false, title:'Beta Cohort Analysis',
+tasks:[
+  {t:'Analyse beta usage data: top features, drop-offs, champions', cat:'p'},
+  {t:'Document 3–5 beta user success stories', cat:'c'},
+  {t:'LinkedIn Post #42', cat:'c'},
+]},
+{d:44, block:2, ms:false, title:'Week 6 Review',
+tasks:[
+  {t:'Week 6 review: beta health, corporate pilot status', cat:'a'},
+  {t:'Ship top 3 product improvements from feedback', cat:'p'},
+  {t:'LinkedIn Post #43', cat:'c'},
+]},
+{d:45, block:2, ms:false, title:'Corporate Pilots Confirmed',
+tasks:[
+  {t:'Target: 3–5 corporate pilots confirmed ✓', cat:'b'},
+  {t:'Corporate pilot kickoff materials prepared', cat:'b'},
+  {t:'LinkedIn Post #44: "First corporate partners confirmed"', cat:'c'},
+]},
+{d:46, block:2, ms:false, title:'Day 30 Beta NPS',
+tasks:[
+  {t:'Send Day-30 NPS survey to beta users', cat:'p'},
+  {t:'Analyse 30-day beta retention (target 60%+)', cat:'v'},
+  {t:'LinkedIn Post #45', cat:'c'},
+]},
+{d:47, block:2, ms:false, title:'Paid Pricing Finalised',
+tasks:[
+  {t:'Finalise pricing tiers: Explorer $0 / Leader $49 / Executive $199 / Team $5K–10K', cat:'a'},
+  {t:'Build pricing page on website', cat:'p'},
+  {t:'LinkedIn Post #46', cat:'c'},
+]},
+{d:48, block:2, ms:false, title:'Founding Member Offer Design',
+tasks:[
+  {t:'Design Founding Member offer: first 50 annual subscribers get 40% off lifetime', cat:'a'},
+  {t:'Test payment integration (Stripe + Razorpay)', cat:'p'},
+  {t:'LinkedIn Post #47', cat:'c'},
+]},
+{d:49, block:2, ms:false, title:'Launch Email Draft',
+tasks:[
+  {t:'Draft 5-email launch sequence for waitlist conversion', cat:'c'},
+  {t:'Collect testimonials from top beta users', cat:'v'},
+  {t:'LinkedIn Post #48', cat:'c'},
+]},
+{d:50, block:2, ms:false, title:'Pre-Launch Week Starts',
+tasks:[
+  {t:'Send pre-launch teaser email to full waitlist', cat:'c'},
+  {t:'Week 8 review: all systems go for paid launch?', cat:'a'},
+  {t:'LinkedIn Post #49: "Launching paid in 10 days"', cat:'c'},
+]},
+{d:51, block:2, ms:false, title:'Launch Countdown — 9 Days',
+tasks:[
+  {t:'LinkedIn Post #50: Founding Member offer announcement', cat:'c'},
+  {t:'Final product QA — run through all flows end-to-end', cat:'p'},
+]},
+{d:52, block:2, ms:false, title:'Launch Countdown — 8 Days',
+tasks:[
+  {t:'Email #2 to waitlist: "Why SthirMind is different"', cat:'c'},
+  {t:'LinkedIn Post #51', cat:'c'},
+]},
+{d:53, block:2, ms:false, title:'Launch Countdown — 7 Days',
+tasks:[
+  {t:'Email #3 to waitlist: Beta user success story', cat:'c'},
+  {t:'LinkedIn Post #52: Beta user transformation story', cat:'c'},
+]},
+{d:54, block:2, ms:false, title:'Launch Countdown — 6 Days',
+tasks:[
+  {t:'Email #4: The 5H Framework explainer', cat:'c'},
+  {t:'LinkedIn Post #53', cat:'c'},
+  {t:'Prepare corporate pilot kickoff decks', cat:'b'},
+]},
+{d:55, block:2, ms:false, title:'Launch Countdown — 5 Days',
+tasks:[
+  {t:'Email #5: "Doors open in 5 days — Founding Member spots limited"', cat:'c'},
+  {t:'LinkedIn Post #54: Final teaser', cat:'c'},
+]},
+{d:56, block:2, ms:false, title:'Launch Countdown — 4 Days',
+tasks:[
+  {t:'Final payment gateway test — complete purchase flow', cat:'p'},
+  {t:'LinkedIn Post #55: "What leaders are saying about SthirMind"', cat:'c'},
+]},
+{d:57, block:2, ms:false, title:'Launch Countdown — 3 Days',
+tasks:[
+  {t:'Confirm corporate pilot start dates (Day 63–65)', cat:'b'},
+  {t:'LinkedIn Post #56: "3 days to go"', cat:'c'},
+]},
+{d:58, block:2, ms:false, title:'Launch Countdown — 2 Days',
+tasks:[
+  {t:'Brief any support channels — AI chatbot ready for launch questions', cat:'p'},
+  {t:'LinkedIn Post #57: "Tomorrow is the day"', cat:'c'},
+]},
+{d:59, block:2, ms:false, title:'Launch Eve — Final Prep',
+tasks:[
+  {t:'Final review of all launch materials — emails, pricing page, checkout', cat:'a'},
+  {t:'LinkedIn Post #58: "Launch is tomorrow"', cat:'c'},
+  {t:'Vipassana practice — equanimity before the storm', cat:'a'},
+]},
+{d:60, block:2, ms:true, title:'🏆 MILESTONE: Block 2 Complete — Launch Ready',
+tasks:[
+  {t:'✅ BLOCK 2 MILESTONE REVIEW', cat:'a'},
+  {t:'Check: 100 beta users ✓ | 3–5 pilots confirmed ✓ | 3-month retention measuring ✓', cat:'a'},
+  {t:'LinkedIn followers check (target 5,000+)', cat:'a'},
+  {t:'Spend review: under ₹5L so far?', cat:'a'},
+  {t:'LinkedIn Post #59: Block 2 complete', cat:'c'},
+]},
+
+// BLOCK 3: MONETIZE + SCALE (Day 61–90)
+{d:61, block:3, ms:true, title:'🚀 LAUNCH DAY — Paid Subscriptions Open',
+tasks:[
+  {t:'🚀 LAUNCH: Open paid subscriptions — all tiers live', cat:'a'},
+  {t:'Send launch email to full waitlist', cat:'c'},
+  {t:'LinkedIn Post #60: Launch announcement', cat:'c'},
+  {t:'Monitor first conversions in real-time', cat:'a'},
+]},
+{d:62, block:3, ms:false, title:'Post-Launch Day 2',
+tasks:[
+  {t:'Follow up personally with non-converters (top 20 waitlist)', cat:'v'},
+  {t:'Monitor Founding Member offer uptake', cat:'a'},
+  {t:'LinkedIn Post #61: "We\'re live — here\'s what happened in 24 hours"', cat:'c'},
+]},
+{d:63, block:3, ms:false, title:'Corporate Pilot #1 Live',
+tasks:[
+  {t:'Corporate pilot #1 kickoff — onboard first 20 leaders', cat:'b'},
+  {t:'Corporate pilot #2 kickoff', cat:'b'},
+  {t:'LinkedIn Post #62', cat:'c'},
+]},
+{d:64, block:3, ms:false, title:'Conversion Push',
+tasks:[
+  {t:'Launch email #2 to non-converters: "Founding Member spots closing"', cat:'c'},
+  {t:'First week revenue tally — on track for $10K MRR pace?', cat:'a'},
+  {t:'LinkedIn Post #63', cat:'c'},
+]},
+{d:65, block:3, ms:false, title:'Corporate Pilot #3 Live',
+tasks:[
+  {t:'Corporate pilot #3 kickoff', cat:'b'},
+  {t:'LinkedIn Post #64', cat:'c'},
+]},
+{d:66, block:3, ms:false, title:'Retreat Announcement',
+tasks:[
+  {t:'Announce 3-day "Founder\'s Equanimity Retreat" (Day 120, 20 leaders, ₹50K–1.5L)', cat:'c'},
+  {t:'Retreat registration page live', cat:'p'},
+  {t:'LinkedIn Post #65: Retreat announcement', cat:'c'},
+]},
+{d:67, block:3, ms:false, title:'Week 9 Review',
+tasks:[
+  {t:'Paying users count: target 50+ by Day 67', cat:'a'},
+  {t:'MRR check: on track?', cat:'a'},
+  {t:'LinkedIn Post #66', cat:'c'},
+  {t:'Corporate pilot #4 kickoff', cat:'b'},
+]},
+{d:68, block:3, ms:false, title:'LinkedIn Long-Form Draft',
+tasks:[
+  {t:'Draft LinkedIn long-form article: "The 5H Framework: Building a $100M Company with Equanimity"', cat:'c'},
+  {t:'LinkedIn Post #67', cat:'c'},
+]},
+{d:69, block:3, ms:false, title:'Corporate Pilot #5 + Article',
+tasks:[
+  {t:'Corporate pilot #5 kickoff', cat:'b'},
+  {t:'Finalise long-form article — review + edit', cat:'c'},
+  {t:'LinkedIn Post #68', cat:'c'},
+]},
+{d:70, block:3, ms:false, title:'Week 10 Review',
+tasks:[
+  {t:'Revenue review: MRR vs $10K target', cat:'a'},
+  {t:'All 5 corporate pilots active ✓', cat:'b'},
+  {t:'LinkedIn Post #69', cat:'c'},
+]},
+{d:71, block:3, ms:false, title:'Email Optimisation',
+tasks:[
+  {t:'Optimise launch email sequence based on open/click data', cat:'c'},
+  {t:'LinkedIn Post #70', cat:'c'},
+]},
+{d:72, block:3, ms:false, title:'Retreat Marketing Push',
+tasks:[
+  {t:'LinkedIn campaign for retreat: "20 spots. Limited. Day 120."', cat:'c'},
+  {t:'LinkedIn Post #71', cat:'c'},
+]},
+{d:73, block:3, ms:false, title:'Publish Long-Form Article',
+tasks:[
+  {t:'Publish LinkedIn long-form article: "The 5H Framework"', cat:'c'},
+  {t:'LinkedIn Post #72: Article live — share + engage', cat:'c'},
+]},
+{d:74, block:3, ms:false, title:'Press Outreach',
+tasks:[
+  {t:'Send press pitch to 5 relevant media outlets (leadership/wellness/startup beat)', cat:'c'},
+  {t:'LinkedIn Post #73', cat:'c'},
+]},
+{d:75, block:3, ms:true, title:'🏆 MILESTONE: Day 75 — 100 Paying Users Target',
+tasks:[
+  {t:'✅ DAY 75 MILESTONE: 100 paying users check', cat:'a'},
+  {t:'MRR milestone: $5,000+ confirmed?', cat:'a'},
+  {t:'All 5 corporate pilots active + month-end review scheduled', cat:'b'},
+  {t:'LinkedIn followers: 8,000+ target', cat:'a'},
+  {t:'LinkedIn Post #74: "75 days in — here\'s what\'s happened"', cat:'c'},
+]},
+{d:76, block:3, ms:false, title:'Retreat Fills Up',
+tasks:[
+  {t:'Retreat: target 10+ registrations by Day 76', cat:'a'},
+  {t:'LinkedIn Post #75', cat:'c'},
+]},
+{d:77, block:3, ms:false, title:'Corporate Pilot Month-End Reviews',
+tasks:[
+  {t:'Month-end review calls with corporate pilots #1 + #2', cat:'b'},
+  {t:'Document pilot results: before/after Mindful Leadership Scores', cat:'b'},
+  {t:'LinkedIn Post #76', cat:'c'},
+]},
+{d:78, block:3, ms:false, title:'Testimonials + Case Studies',
+tasks:[
+  {t:'Collect written testimonials from corporate pilot #1 + #2 leaders', cat:'v'},
+  {t:'Draft 2 corporate pilot case studies', cat:'c'},
+  {t:'LinkedIn Post #77: Corporate pilot result teaser', cat:'c'},
+]},
+{d:79, block:3, ms:false, title:'Waitlist Conversion Push',
+tasks:[
+  {t:'Final conversion email to remaining waitlist non-converters', cat:'c'},
+  {t:'LinkedIn Post #78', cat:'c'},
+]},
+{d:80, block:3, ms:false, title:'9,000 Followers Push',
+tasks:[
+  {t:'LinkedIn engagement sprint — comment on 20 top leaders\' posts', cat:'c'},
+  {t:'LinkedIn Post #79', cat:'c'},
+  {t:'LinkedIn followers check: 9,000+ target', cat:'a'},
+]},
+{d:81, block:3, ms:false, title:'Week 11 Review',
+tasks:[
+  {t:'Revenue trajectory review: $10K–50K MRR pace?', cat:'a'},
+  {t:'Corporate pilot #3 + #4 month-end reviews', cat:'b'},
+  {t:'LinkedIn Post #80', cat:'c'},
+]},
+{d:82, block:3, ms:false, title:'Phase 2+3 Planning',
+tasks:[
+  {t:'Begin planning Phase 2+3 (Day 90–365): AI coach 2.0, Team Dynamics Module', cat:'a'},
+  {t:'LinkedIn Post #81', cat:'c'},
+]},
+{d:83, block:3, ms:false, title:'Corporate Pilot #5 Results',
+tasks:[
+  {t:'Corporate pilot #5 month-end review', cat:'b'},
+  {t:'Collect remaining pilot testimonials', cat:'v'},
+  {t:'LinkedIn Post #82', cat:'c'},
+]},
+{d:84, block:3, ms:false, title:'Retreat Sold Out Push',
+tasks:[
+  {t:'Retreat target: 20 leaders registered (sold out) ✓', cat:'a'},
+  {t:'LinkedIn Post #83: "Retreat sold out"', cat:'c'},
+]},
+{d:85, block:3, ms:false, title:'Phase 2 Blueprint',
+tasks:[
+  {t:'Draft Phase 2+3 execution blueprint: AI Coach 2.0 + B2B scale', cat:'a'},
+  {t:'LinkedIn Post #84', cat:'c'},
+]},
+{d:86, block:3, ms:false, title:'Final Push — 150+ Paying Users',
+tasks:[
+  {t:'LinkedIn followers: 9,500+ check', cat:'a'},
+  {t:'Paying users push: target 150+ by Day 90', cat:'a'},
+  {t:'LinkedIn Post #85', cat:'c'},
+]},
+{d:87, block:3, ms:false, title:'Corporate Renewal Conversations',
+tasks:[
+  {t:'Begin renewal conversations with corporate pilots (Q2 contract?)', cat:'b'},
+  {t:'LinkedIn Post #86', cat:'c'},
+]},
+{d:88, block:3, ms:false, title:'Prepare Day 90 Review',
+tasks:[
+  {t:'Compile all Day 90 metrics for milestone review', cat:'a'},
+  {t:'Write Phase 1 retrospective document', cat:'a'},
+  {t:'LinkedIn Post #87', cat:'c'},
+]},
+{d:89, block:3, ms:false, title:'Final Day Prep',
+tasks:[
+  {t:'Final KPI tally and snapshot', cat:'a'},
+  {t:'LinkedIn Post #88: "Tomorrow is Day 90"', cat:'c'},
+  {t:'Vipassana practice — gratitude and equanimity', cat:'a'},
+]},
+{d:90, block:3, ms:true, title:'🏆 MILESTONE: Day 90 — Phase 0+1 Complete',
+tasks:[
+  {t:'✅ DAY 90 GRAND MILESTONE REVIEW', cat:'a'},
+  {t:'Paying users: target 100–200+', cat:'a'},
+  {t:'MRR: target $10,000–50,000', cat:'a'},
+  {t:'Corporate pilots: target 3–5 active', cat:'a'},
+  {t:'LinkedIn followers: target 10,000+', cat:'a'},
+  {t:'Waitlist: target 2,000+', cat:'a'},
+  {t:'Retreat: sold out at 20 leaders', cat:'a'},
+  {t:'Total spend: under ₹8L', cat:'a'},
+  {t:'LinkedIn Post #89: "Day 90 — What we built, what we learned, what\'s next"', cat:'c'},
+  {t:'Publish Phase 2+3 plan and announce next chapter', cat:'a'},
+]},
+];
+
+// ════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════
+function ls(k,def){try{const v=localStorage.getItem(k);return v!==null?JSON.parse(v):def}catch{return def}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}
+
+let checked  = ls('5h_checked', {});
+let kpiVals  = ls('5h_kpi', {});
+let stars    = ls('5h_stars', {heart:0,hope:0,happy:0,health:0,help:0});
+let filter   = 'all';
+let editKPI  = null;
+
+// ════════════════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════════════════
+function dayDate(d){
+  const dt=new Date(START); dt.setDate(dt.getDate()+d-1);
+  return dt.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+}
+function currentWeek(){return Math.ceil(dayNum/7)}
+function currentBlock(){return dayNum<=30?1:dayNum<=60?2:3}
+
+function tasksDone(d){
+  return d.tasks.filter((_,i)=>checked[`${d.d}-${i}`]).length;
+}
+function totalDone(){return DAYS.reduce((a,d)=>a+tasksDone(d),0)}
+function totalTasks(){return DAYS.reduce((a,d)=>a+d.tasks.length,0)}
+
+function blockStats(b){
+  const bd=DAYS.filter(d=>d.block===b);
+  const done=bd.reduce((a,d)=>a+tasksDone(d),0);
+  const total=bd.reduce((a,d)=>a+d.tasks.length,0);
+  return {done,total,pct:total?Math.round(done/total*100):0};
+}
+
+// ════════════════════════════════════════════════════
+// HEADER
+// ════════════════════════════════════════════════════
+function renderHeader(){
+  document.getElementById('dayNum').textContent = dayNum;
+  const pct = Math.round(dayNum/90*100);
+  document.getElementById('hPct').textContent = pct+'%';
+  document.getElementById('hBar').style.width = pct+'%';
+  const cb=currentBlock();
+  const phases=['','Block 1: Validate + Build','Block 2: Ship + Beta','Block 3: Monetize + Scale'];
+  document.getElementById('phaseTag').textContent = '▶ '+phases[cb];
+}
+
+// ════════════════════════════════════════════════════
+// KPI GRID
+// ════════════════════════════════════════════════════
+function renderKPIs(){
+  const g=document.getElementById('kpiGrid');
+  g.innerHTML=KPIS.map(k=>{
+    const val=kpiVals[k.id]||0;
+    const pct=k.inverse?Math.min(100,Math.round((k.target-Math.min(val,k.target))/k.target*100)):Math.min(100,Math.round(val/k.target*100));
+    const isGood = k.inverse ? val<=k.target : val>=k.target*0.7;
+    const barColor = pct>=100?'var(--ok)':pct>=50?k.color:'var(--warn)';
+    return `<div class="kpi-card" onclick="openModal('${k.id}')">
+      <div class="kc-label">${k.icon} ${k.label}</div>
+      <div class="kc-val">${k.unit}${val.toLocaleString()}</div>
+      <div class="kc-target">Target: ${k.unit}${k.target.toLocaleString()}</div>
+      <div class="kc-bar"><div class="kc-fill" style="width:${pct}%;background:${barColor}"></div></div>
+      <div class="kc-pct" style="color:${barColor}">${pct}% of target</div>
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════════════
+// BLOCK GRID (with canvas rings)
+// ════════════════════════════════════════════════════
+const ringCharts={};
+function renderBlocks(){
+  const g=document.getElementById('blockGrid');
+  const cb=currentBlock();
+  const blocks=[
+    {b:1,name:'Validate + Build',dates:'Apr 10 – May 9'},
+    {b:2,name:'Ship + Beta Launch',dates:'May 10 – Jun 8'},
+    {b:3,name:'Monetize + Scale',dates:'Jun 9 – Jul 8'},
+  ];
+  g.innerHTML=blocks.map(bl=>{
+    const s=blockStats(bl.b);
+    return `<div class="block-card${bl.b===cb?' current':''}">
+      <div class="block-num">Block ${bl.b}</div>
+      <div class="block-name">${bl.name}</div>
+      <div class="block-dates">${bl.dates}</div>
+      <div class="ring-wrap"><canvas id="ring${bl.b}" width="64" height="64"></canvas><div class="ring-pct">${s.pct}%</div></div>
+      <div class="block-tasks-done">${s.done}/${s.total} tasks done</div>
+    </div>`;
+  }).join('');
+  blocks.forEach(bl=>{
+    const s=blockStats(bl.b);
+    const cv=document.getElementById('ring'+bl.b);
+    if(!cv)return;
+    const ctx=cv.getContext('2d');
+    if(ringCharts[bl.b])ringCharts[bl.b].destroy();
+    ringCharts[bl.b]=new Chart(ctx,{type:'doughnut',data:{datasets:[{data:[s.pct,100-s.pct],backgroundColor:[bl.b===1?'#F4A261':bl.b===2?'#457B9D':'#52B788','#E2E8F0'],borderWidth:0}]},options:{cutout:'75%',plugins:{legend:{display:false},tooltip:{enabled:false}},animation:{duration:600}}});
+  });
+}
+
+// ════════════════════════════════════════════════════
+// 5H CHECK-IN
+// ════════════════════════════════════════════════════
+function renderStars(){
+  ['heart','hope','happy','health','help'].forEach(h=>{
+    const c=document.getElementById('stars-'+h);
+    if(!c)return;
+    c.innerHTML=[1,2,3,4,5].map(i=>`<div class="star${stars[h]>=i?' lit':''}" onclick="setStar('${h}',${i})">★</div>`).join('');
+  });
+}
+function setStar(h,v){stars[h]=v;lsSet('5h_stars',stars);renderStars()}
+
+// ════════════════════════════════════════════════════
+// TASK LIST
+// ════════════════════════════════════════════════════
+function filteredDays(){
+  if(filter==='today') return DAYS.filter(d=>d.d===dayNum);
+  if(filter==='week'){const w=currentWeek();return DAYS.filter(d=>Math.ceil(d.d/7)===w)}
+  if(filter==='block1') return DAYS.filter(d=>d.block===1);
+  if(filter==='block2') return DAYS.filter(d=>d.block===2);
+  if(filter==='block3') return DAYS.filter(d=>d.block===3);
+  if(filter==='pending') return DAYS.filter(d=>tasksDone(d)<d.tasks.length&&d.d<=dayNum+7);
+  return DAYS;
+}
+
+const tagMap={v:['Validation','tag-v'],p:['Product','tag-p'],c:['Content','tag-c'],b:['Corporate','tag-b'],a:['Admin','tag-a']};
+
+function renderTasks(){
+  const days=filteredDays();
+  const el=document.getElementById('taskList');
+  if(!days.length){el.innerHTML='<p style="color:var(--muted);padding:20px;text-align:center">No days match this filter.</p>';return}
+
+  // Only auto-expand today + nearby; rest collapsed
+  const autoOpen=new Set([dayNum, dayNum-1, dayNum+1]);
+
+  el.innerHTML=days.map(d=>{
+    const done=tasksDone(d);
+    const allDone=done===d.tasks.length;
+    const isToday=d.d===dayNum;
+    const isFuture=d.d>dayNum;
+    const numClass=d.ms?'milestone':isToday?'today':allDone?'done':isFuture?'future':'';
+    const wasOpen=autoOpen.has(d.d);
+
+    return `<div class="day-card${wasOpen?' open':''}" id="dc${d.d}">
+      <div class="day-head${isToday?' today':allDone?' all-done':''}" onclick="toggleDay(${d.d})">
+        <div class="day-num ${numClass}">${d.d}</div>
+        <div class="day-info">
+          <div class="day-title">${d.title}</div>
+          <div class="day-date">Day ${d.d} · ${dayDate(d.d)}</div>
+        </div>
+        <div class="day-right">
+          ${isToday?'<span class="today-badge">TODAY</span>':''}
+          ${d.ms&&!isToday?'<span class="ms-badge">MILESTONE</span>':''}
+          ${allDone&&!isToday?'<span class="done-badge">✓ Done</span>':''}
+          ${!allDone&&!isToday?`<span style="font-size:11px;color:var(--muted)">${done}/${d.tasks.length}</span>`:''}
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="day-body">
+        ${d.ms?`<div class="ms-banner">🏆 MILESTONE DAY — Review all metrics against targets</div>`:''}
+        ${d.tasks.map((task,i)=>{
+          const key=`${d.d}-${i}`;
+          const isDone=!!checked[key];
+          const [tagLabel,tagClass]=tagMap[task.cat]||['',''];
+          return `<div class="task-row">
+            <input type="checkbox" class="tc" ${isDone?'checked':''} onchange="toggleTask('${key}',this.checked)">
+            <div class="task-text${isDone?' crossed':''}">${task.t}</div>
+            <div class="tag ${tagClass}">${tagLabel}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleDay(d){
+  const el=document.getElementById('dc'+d);
+  el.classList.toggle('open');
+}
+function toggleTask(key,val){
+  if(val) checked[key]=true; else delete checked[key];
+  lsSet('5h_checked',checked);
+  renderBlocks();
+  updateCharts();
+  // Update just the task text
+  const cb=event.target.closest('.task-row').querySelector('.task-text');
+  if(cb){cb.classList.toggle('crossed',val)}
+}
+
+// ════════════════════════════════════════════════════
+// TABS
+// ════════════════════════════════════════════════════
+document.getElementById('tabs').addEventListener('click',e=>{
+  const t=e.target.closest('.tab');
+  if(!t)return;
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+  t.classList.add('on');
+  filter=t.dataset.filter;
+  renderTasks();
+});
+
+// ════════════════════════════════════════════════════
+// CHARTS
+// ════════════════════════════════════════════════════
+let chartBlocks, chartKPI;
+function initCharts(){
+  const b1=blockStats(1),b2=blockStats(2),b3=blockStats(3);
+  chartBlocks=new Chart(document.getElementById('chartBlocks'),{
+    type:'bar',
+    data:{
+      labels:['Block 1\nValidate+Build','Block 2\nShip+Beta','Block 3\nMonetize'],
+      datasets:[
+        {label:'Done',data:[b1.done,b2.done,b3.done],backgroundColor:['#F4A261','#457B9D','#52B788'],borderRadius:6},
+        {label:'Remaining',data:[b1.total-b1.done,b2.total-b2.done,b3.total-b3.done],backgroundColor:['#FFE5CC','#D6E8F0','#D5F0E3'],borderRadius:6},
+      ]
+    },
+    options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:11}}}},scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,grid:{color:'#F0F4F8'}}}}
+  });
+
+  const kpiLabels=KPIS.map(k=>k.label.replace(' ','  '));
+  const kpiPcts=KPIS.map(k=>{const v=kpiVals[k.id]||0;return k.inverse?Math.min(100,Math.round((k.target-Math.min(v,k.target))/k.target*100)):Math.min(100,Math.round(v/k.target*100))});
+  chartKPI=new Chart(document.getElementById('chartKPI'),{
+    type:'bar',
+    data:{
+      labels:KPIS.map(k=>k.icon+' '+k.id.charAt(0).toUpperCase()+k.id.slice(1)),
+      datasets:[{label:'% of Target',data:kpiPcts,backgroundColor:KPIS.map(k=>k.color),borderRadius:6}]
+    },
+    options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false}},scales:{x:{max:100,grid:{color:'#F0F4F8'},ticks:{callback:v=>v+'%'}},y:{grid:{display:false},ticks:{font:{size:11}}}}}
+  });
+}
+function updateCharts(){
+  if(!chartBlocks||!chartKPI)return;
+  const b1=blockStats(1),b2=blockStats(2),b3=blockStats(3);
+  chartBlocks.data.datasets[0].data=[b1.done,b2.done,b3.done];
+  chartBlocks.data.datasets[1].data=[b1.total-b1.done,b2.total-b2.done,b3.total-b3.done];
+  chartBlocks.update();
+  const kpiPcts=KPIS.map(k=>{const v=kpiVals[k.id]||0;return k.inverse?Math.min(100,Math.round((k.target-Math.min(v,k.target))/k.target*100)):Math.min(100,Math.round(v/k.target*100))});
+  chartKPI.data.datasets[0].data=kpiPcts;
+  chartKPI.update();
+}
+
+// ════════════════════════════════════════════════════
+// KPI MODAL
+// ════════════════════════════════════════════════════
+function openModal(id){
+  const k=KPIS.find(x=>x.id===id);
+  editKPI=id;
+  document.getElementById('mTitle').textContent='Update: '+k.label;
+  document.getElementById('mSub').textContent=`Current: ${k.unit}${(kpiVals[id]||0).toLocaleString()} · Target: ${k.unit}${k.target.toLocaleString()}`;
+  document.getElementById('mInput').value=kpiVals[id]||0;
+  document.getElementById('overlay').classList.add('show');
+  setTimeout(()=>document.getElementById('mInput').focus(),100);
+}
+function closeModal(){document.getElementById('overlay').classList.remove('show');editKPI=null}
+function saveKPI(){
+  if(!editKPI)return;
+  kpiVals[editKPI]=parseInt(document.getElementById('mInput').value)||0;
+  lsSet('5h_kpi',kpiVals);
+  closeModal();
+  renderKPIs();
+  updateCharts();
+}
+document.getElementById('overlay').addEventListener('click',e=>{if(e.target===document.getElementById('overlay'))closeModal()});
+document.getElementById('mInput').addEventListener('keydown',e=>{if(e.key==='Enter')saveKPI()});
+
+// ════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════
+renderHeader();
+renderKPIs();
+renderBlocks();
+renderStars();
+renderTasks();
+initCharts();
+</script>
+</body>
+</html>

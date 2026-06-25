@@ -1,0 +1,108 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Design System Tokens ─────────────────────────────────── */
+:root {
+  /* Brand */
+  --navy:    #1B3A6B;
+  --navy-l:  #2C5F9E;
+  --gold:    #F4A261;
+  --gold-l:  #FDDDB7;
+
+  /* 5H Pillar Colors */
+  --heart:   #E63946;  /* Heart — red */
+  --hope:    #457B9D;  /* Hope  — blue */
+  --health:  #52B788;  /* Health — green */
+  --help:    #7B2D8B;  /* Help  — purple */
+  --happy:   #F4A261;  /* Happiness — gold */
+
+  /* Semantic */
+  --ok:    #48BB78;
+  --warn:  #ECC94B;
+  --err:   #FC8181;
+  --info:  #63B3ED;
+
+  /* Neutral */
+  --bg:     #F0F4F8;
+  --card:   #FFFFFF;
+  --text:   #1A202C;
+  --muted:  #718096;
+  --border: #E2E8F0;
+
+  /* Shadows */
+  --shadow-sm:  0 1px 3px rgba(0,0,0,.08);
+  --shadow-md:  0 4px 16px rgba(0,0,0,.10);
+  --shadow-lg:  0 8px 32px rgba(0,0,0,.15);
+  --shadow-xl:  0 20px 60px rgba(0,0,0,.20);
+}
+
+.dark {
+  --bg:     #0F1624;
+  --card:   #1A2336;
+  --text:   #EDF2F7;
+  --muted:  #A0AEC0;
+  --border: #2D3748;
+}
+
+@layer base {
+  * { @apply border-border; }
+  body { @apply bg-[var(--bg)] text-[var(--text)] min-h-screen; }
+  h1,h2,h3 { @apply font-serif; }
+}
+
+/* ── Pillar Gradients ─────────────────────────────────────── */
+.gradient-heart   { background: linear-gradient(135deg, #E63946, #FF6B6B); }
+.gradient-hope    { background: linear-gradient(135deg, #457B9D, #1D3557); }
+.gradient-health  { background: linear-gradient(135deg, #52B788, #1B4332); }
+.gradient-help    { background: linear-gradient(135deg, #7B2D8B, #3D0C4E); }
+.gradient-happy   { background: linear-gradient(135deg, #F4A261, #E76F51); }
+.gradient-navy    { background: linear-gradient(135deg, #1B3A6B, #2C5F9E); }
+
+/* ── Score Ring ───────────────────────────────────────────── */
+.score-ring {
+  @apply relative flex items-center justify-center rounded-full;
+}
+
+/* ── Glass Card ───────────────────────────────────────────── */
+.glass {
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.3);
+}
+
+.dark .glass {
+  background: rgba(26,35,54,0.85);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+/* ── Scrollbar ────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ── Animations ───────────────────────────────────────────── */
+@keyframes pulse-ring {
+  0%   { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+.pulse-ring::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  animation: pulse-ring 2s cubic-bezier(0,0,0.2,1) infinite;
+}
+
+@keyframes float {
+  0%,100% { transform: translateY(0); }
+  50%      { transform: translateY(-8px); }
+}
+.float { animation: float 3s ease-in-out infinite; }
+
+/* ── Haptic feedback for mobile ───────────────────────────── */
+@media (hover: none) {
+  button:active, [role="button"]:active { transform: scale(0.97); }
+}
