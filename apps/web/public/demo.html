@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SthirMind OS — Live Demo</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --navy: #1B3A6B;
+    --gold: #F4A261;
+    --heart: #E63946;
+    --hope: #457B9D;
+    --health: #52B788;
+    --help: #7B2D8B;
+    --happy: #F4A261;
+    --bg: #0D1B2A;
+    --surface: #1A2A3D;
+    --surface2: #243447;
+    --text: #E8F0FE;
+    --muted: #8B9BB4;
+    --border: rgba(255,255,255,0.08);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui,sans-serif; min-height:100vh; overflow-x:hidden; }
+
+  /* NAV */
+  nav { position:fixed; top:0; left:0; right:0; z-index:100; background:rgba(13,27,42,0.95); backdrop-filter:blur(12px); border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; padding:0 24px; height:60px; }
+  .nav-logo { font-size:1.25rem; font-weight:700; color:var(--gold); letter-spacing:-0.5px; }
+  .nav-logo span { color:var(--text); }
+  .nav-tabs { display:flex; gap:4px; }
+  .nav-tab { padding:6px 14px; border-radius:8px; border:none; background:transparent; color:var(--muted); cursor:pointer; font-size:0.85rem; transition:all .2s; }
+  .nav-tab.active, .nav-tab:hover { background:var(--surface2); color:var(--text); }
+  .nav-tab.active { color:var(--gold); }
+  .nav-user { display:flex; align-items:center; gap:10px; font-size:0.85rem; color:var(--muted); }
+  .avatar { width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,var(--gold),var(--heart)); display:grid; place-items:center; font-weight:700; font-size:0.8rem; color:#fff; }
+
+  /* PANELS */
+  .panel { display:none; padding:80px 24px 40px; max-width:1200px; margin:0 auto; }
+  .panel.active { display:block; }
+
+  /* CARDS */
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:20px; }
+  .card-title { font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin-bottom:12px; }
+
+  /* GRID */
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .grid3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
+  .grid4 { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:16px; }
+
+  /* HAPPINESS RING */
+  .ring-wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:8px; }
+  #happinessCanvas { display:block; }
+  .ring-score { font-size:2.5rem; font-weight:800; color:var(--gold); margin-top:-8px; }
+  .ring-tier { font-size:0.8rem; color:var(--muted); }
+
+  /* PILLAR CARDS */
+  .pillar-card { border-radius:16px; padding:20px; border:1px solid var(--border); background:var(--surface); position:relative; overflow:hidden; cursor:pointer; transition:transform .2s; }
+  .pillar-card:hover { transform:translateY(-3px); }
+  .pillar-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+  .pillar-card.heart::before { background:var(--heart); }
+  .pillar-card.hope::before { background:var(--hope); }
+  .pillar-card.health::before { background:var(--health); }
+  .pillar-card.help::before { background:var(--help); }
+  .pillar-label { font-size:0.7rem; text-transform:uppercase; letter-spacing:1px; color:var(--muted); }
+  .pillar-score { font-size:2rem; font-weight:800; margin:4px 0; }
+  .pillar-card.heart .pillar-score { color:var(--heart); }
+  .pillar-card.hope .pillar-score { color:var(--hope); }
+  .pillar-card.health .pillar-score { color:var(--health); }
+  .pillar-card.help .pillar-score { color:var(--help); }
+  .pillar-bar-bg { height:6px; background:rgba(255,255,255,0.08); border-radius:3px; overflow:hidden; margin-top:10px; }
+  .pillar-bar { height:100%; border-radius:3px; transition:width 1s cubic-bezier(.4,0,.2,1); }
+  .pillar-card.heart .pillar-bar { background:var(--heart); }
+  .pillar-card.hope .pillar-bar { background:var(--hope); }
+  .pillar-card.health .pillar-bar { background:var(--health); }
+  .pillar-card.help .pillar-bar { background:var(--help); }
+  .pillar-emoji { font-size:1.5rem; margin-bottom:6px; }
+
+  /* CHAT */
+  .chat-layout { display:grid; grid-template-columns:220px 1fr; gap:16px; height:calc(100vh - 120px); max-height:700px; }
+  .agent-list { display:flex; flex-direction:column; gap:8px; }
+  .agent-btn { padding:12px 14px; border-radius:12px; border:1px solid var(--border); background:var(--surface); color:var(--muted); cursor:pointer; text-align:left; font-size:0.85rem; transition:all .2s; }
+  .agent-btn.active { background:var(--surface2); color:var(--text); border-color:var(--gold); }
+  .agent-btn span { display:block; font-size:0.7rem; color:var(--muted); margin-top:2px; }
+  .chat-box { display:flex; flex-direction:column; background:var(--surface); border:1px solid var(--border); border-radius:16px; overflow:hidden; }
+  .chat-header { padding:16px 20px; border-bottom:1px solid var(--border); font-weight:600; display:flex; align-items:center; gap:10px; }
+  .agent-dot { width:8px; height:8px; border-radius:50%; background:var(--health); animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.4} }
+  .chat-messages { flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:12px; }
+  .chat-messages::-webkit-scrollbar { width:4px; }
+  .chat-messages::-webkit-scrollbar-track { background:transparent; }
+  .chat-messages::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+  .msg { max-width:75%; padding:12px 16px; border-radius:16px; font-size:0.9rem; line-height:1.5; animation:fadeUp .3s ease; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+  .msg.ai { background:var(--surface2); border-bottom-left-radius:4px; align-self:flex-start; }
+  .msg.user { background:var(--navy); border-bottom-right-radius:4px; align-self:flex-end; }
+  .typing-indicator { display:flex; gap:4px; padding:12px 16px; background:var(--surface2); border-radius:16px; border-bottom-left-radius:4px; width:fit-content; }
+  .typing-dot { width:6px; height:6px; border-radius:50%; background:var(--muted); animation:bounce 1.2s infinite; }
+  .typing-dot:nth-child(2) { animation-delay:.2s; }
+  .typing-dot:nth-child(3) { animation-delay:.4s; }
+  @keyframes bounce { 0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)} }
+  .chat-input-row { padding:16px; border-top:1px solid var(--border); display:flex; gap:10px; }
+  .chat-input { flex:1; background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:12px 16px; color:var(--text); font-size:0.9rem; resize:none; outline:none; font-family:inherit; }
+  .chat-input:focus { border-color:rgba(244,162,97,.4); }
+  .send-btn { padding:12px 20px; background:var(--gold); color:#fff; border:none; border-radius:12px; cursor:pointer; font-weight:600; transition:opacity .2s; }
+  .send-btn:hover { opacity:.85; }
+
+  /* CHECKIN WIZARD */
+  .checkin-step { display:none; }
+  .checkin-step.active { display:block; }
+  .mood-grid { display:flex; gap:12px; flex-wrap:wrap; margin-top:16px; }
+  .mood-btn { padding:16px 20px; border-radius:16px; border:2px solid var(--border); background:var(--surface2); cursor:pointer; font-size:1.5rem; transition:all .2s; }
+  .mood-btn.selected, .mood-btn:hover { border-color:var(--gold); transform:scale(1.1); }
+  .mood-label { font-size:0.65rem; display:block; margin-top:4px; color:var(--muted); text-align:center; }
+  .slider-row { margin:16px 0; }
+  .slider-label { display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:8px; }
+  input[type=range] { width:100%; accent-color:var(--gold); }
+  .grat-input { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:12px; color:var(--text); font-size:0.9rem; margin:8px 0; outline:none; }
+  .grat-input:focus { border-color:rgba(244,162,97,.4); }
+  .btn-primary { padding:12px 28px; background:linear-gradient(135deg,var(--gold),#e8834a); border:none; border-radius:12px; color:#fff; font-weight:700; cursor:pointer; font-size:0.95rem; transition:transform .2s; }
+  .btn-primary:hover { transform:scale(1.03); }
+  .btn-secondary { padding:12px 24px; background:var(--surface2); border:1px solid var(--border); border-radius:12px; color:var(--text); cursor:pointer; font-size:0.9rem; }
+  .checkin-nav { display:flex; gap:12px; margin-top:24px; justify-content:flex-end; }
+  .step-dots { display:flex; gap:8px; margin-bottom:24px; }
+  .step-dot { width:8px; height:8px; border-radius:50%; background:var(--border); transition:all .3s; }
+  .step-dot.active { background:var(--gold); width:24px; border-radius:4px; }
+
+  /* GOALS */
+  .goal-item { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:16px; margin-bottom:12px; display:flex; gap:14px; align-items:center; }
+  .goal-icon { font-size:1.5rem; }
+  .goal-info { flex:1; }
+  .goal-title-text { font-weight:600; margin-bottom:4px; }
+  .goal-meta { font-size:0.8rem; color:var(--muted); }
+  .goal-progress-wrap { width:120px; }
+  .goal-pct { font-size:0.75rem; color:var(--muted); text-align:right; margin-bottom:4px; }
+  .goal-bar-bg { height:8px; background:rgba(255,255,255,0.08); border-radius:4px; }
+  .goal-bar { height:100%; border-radius:4px; background:linear-gradient(90deg,var(--hope),var(--health)); transition:width 1.2s ease; }
+  .badge { display:inline-block; padding:2px 8px; border-radius:20px; font-size:0.7rem; font-weight:600; }
+  .badge.active { background:rgba(82,183,136,0.2); color:var(--health); }
+  .badge.paused { background:rgba(244,162,97,0.2); color:var(--gold); }
+
+  /* HABITS */
+  .habit-strip { display:flex; gap:10px; flex-wrap:wrap; }
+  .habit-chip { padding:10px 16px; border-radius:10px; border:1px solid var(--border); background:var(--surface); display:flex; align-items:center; gap:8px; font-size:0.85rem; cursor:pointer; transition:all .2s; user-select:none; }
+  .habit-chip.done { background:rgba(82,183,136,0.15); border-color:var(--health); }
+  .habit-chip .streak { font-size:0.7rem; color:var(--muted); }
+
+  /* INSIGHTS */
+  .insight-item { padding:16px; border-radius:14px; border-left:3px solid; margin-bottom:10px; background:var(--surface2); }
+  .insight-item.heart { border-color:var(--heart); }
+  .insight-item.hope { border-color:var(--hope); }
+  .insight-item.health { border-color:var(--health); }
+  .insight-item.help { border-color:var(--help); }
+  .insight-title { font-size:0.8rem; text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px; }
+  .insight-item.heart .insight-title { color:var(--heart); }
+  .insight-item.hope .insight-title { color:var(--hope); }
+  .insight-item.health .insight-title { color:var(--health); }
+  .insight-item.help .insight-title { color:var(--help); }
+  .insight-text { font-size:0.88rem; color:var(--muted); line-height:1.5; }
+
+  /* ANALYTICS */
+  .chart-wrap { position:relative; height:240px; }
+
+  /* ONBOARDING OVERLAY */
+  #onboarding { position:fixed; inset:0; background:rgba(0,0,0,.85); z-index:200; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(8px); }
+  .ob-card { background:var(--surface); border:1px solid var(--border); border-radius:24px; padding:40px; max-width:520px; width:90%; text-align:center; }
+  .ob-title { font-size:1.8rem; font-weight:800; color:var(--gold); margin-bottom:8px; }
+  .ob-subtitle { color:var(--muted); margin-bottom:32px; }
+  .ob-step { display:none; }
+  .ob-step.active { display:block; }
+  .ob-name-input { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:14px; color:var(--text); font-size:1rem; outline:none; margin-bottom:20px; text-align:center; }
+  .ob-emojis { display:flex; justify-content:center; gap:16px; margin:20px 0; font-size:2rem; }
+  .ob-emoji-btn { padding:12px; border-radius:12px; border:2px solid var(--border); background:var(--surface2); cursor:pointer; transition:all .2s; }
+  .ob-emoji-btn.sel { border-color:var(--gold); transform:scale(1.2); }
+  .diamond { font-size:4rem; margin-bottom:20px; }
+  .formula-box { background:var(--surface2); border-radius:12px; padding:16px; margin:16px 0; font-family:monospace; font-size:0.9rem; color:var(--gold); }
+  .progress-bar-ob { height:4px; background:var(--border); border-radius:2px; overflow:hidden; margin-bottom:32px; }
+  .progress-fill { height:100%; background:var(--gold); border-radius:2px; transition:width .4s; }
+
+  /* TOAST */
+  .toast { position:fixed; bottom:24px; right:24px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 20px; font-size:0.9rem; z-index:300; animation:slideIn .3s ease; box-shadow:0 8px 32px rgba(0,0,0,.4); max-width:320px; }
+  @keyframes slideIn { from{transform:translateX(100%);opacity:0} to{transform:translateX(0);opacity:1} }
+  .toast.success { border-left:3px solid var(--health); }
+  .toast.info { border-left:3px solid var(--hope); }
+
+  /* COMMUNITY */
+  .post-item { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:18px; margin-bottom:12px; }
+  .post-header { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .post-avatar { width:36px; height:36px; border-radius:50%; display:grid; place-items:center; font-weight:700; font-size:0.85rem; }
+  .post-meta { font-size:0.8rem; color:var(--muted); }
+  .post-text { font-size:0.9rem; line-height:1.6; margin-bottom:10px; }
+  .post-actions { display:flex; gap:16px; }
+  .post-action { background:none; border:none; color:var(--muted); cursor:pointer; font-size:0.8rem; display:flex; align-items:center; gap:4px; transition:color .2s; }
+  .post-action:hover { color:var(--text); }
+
+  /* SECTION HEADERS */
+  h2.section-title { font-size:1.4rem; font-weight:800; margin-bottom:6px; }
+  .section-sub { color:var(--muted); font-size:0.9rem; margin-bottom:24px; }
+
+  /* RESPONSIVE */
+  @media(max-width:768px) {
+    .grid4 { grid-template-columns:1fr 1fr; }
+    .grid3 { grid-template-columns:1fr; }
+    .chat-layout { grid-template-columns:1fr; }
+    .agent-list { flex-direction:row; overflow-x:auto; flex-wrap:nowrap; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ONBOARDING -->
+<div id="onboarding">
+  <div class="ob-card">
+    <div class="progress-bar-ob"><div class="progress-fill" id="obProgress" style="width:0%"></div></div>
+
+    <div class="ob-step active" id="ob0">
+      <div class="diamond">💎</div>
+      <div class="ob-title">Welcome to SthirMind</div>
+      <div class="ob-subtitle">The world's most advanced AI-Powered Human Operating System</div>
+      <button class="btn-primary" onclick="obNext()">Begin Your Journey →</button>
+    </div>
+
+    <div class="ob-step" id="ob1">
+      <div style="font-size:2.5rem;margin-bottom:16px">👤</div>
+      <div class="ob-title">What's your name?</div>
+      <div class="ob-subtitle">Let's personalize your OS</div>
+      <input class="ob-name-input" id="obName" placeholder="Your name..." />
+      <button class="btn-primary" onclick="obNext()">Continue →</button>
+    </div>
+
+    <div class="ob-step" id="ob2">
+      <div style="font-size:2.5rem;margin-bottom:16px">🎯</div>
+      <div class="ob-title">What brings you here?</div>
+      <div class="ob-subtitle">Choose your primary focus</div>
+      <div class="ob-emojis">
+        <div class="ob-emoji-btn" onclick="selectGoal(this,'❤️ Heart')">❤️<div style="font-size:.65rem;margin-top:4px">Heart</div></div>
+        <div class="ob-emoji-btn" onclick="selectGoal(this,'🌟 Hope')">🌟<div style="font-size:.65rem;margin-top:4px">Hope</div></div>
+        <div class="ob-emoji-btn" onclick="selectGoal(this,'💪 Health')">💪<div style="font-size:.65rem;margin-top:4px">Health</div></div>
+        <div class="ob-emoji-btn" onclick="selectGoal(this,'🤝 Help')">🤝<div style="font-size:.65rem;margin-top:4px">Help</div></div>
+      </div>
+      <button class="btn-primary" onclick="obNext()">Continue →</button>
+    </div>
+
+    <div class="ob-step" id="ob3">
+      <div style="font-size:2.5rem;margin-bottom:16px">🧮</div>
+      <div class="ob-title">The 5H Formula</div>
+      <div class="ob-subtitle">Science-backed happiness measurement</div>
+      <div class="formula-box">H = 0.28·Heart + 0.25·Hope + 0.27·Health + 0.20·Help</div>
+      <div style="font-size:0.85rem;color:var(--muted);line-height:1.6">Derived from Harvard's 85-year Study, Seligman's PERMA model, and 50,000+ data points from SthirMind users worldwide.</div>
+      <button class="btn-primary" style="margin-top:20px" onclick="obFinish()">Enter Your OS →</button>
+    </div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">Sthir<span>Mind</span></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPanel('dashboard',this)">🏠 Dashboard</button>
+    <button class="nav-tab" onclick="showPanel('ai',this)">🤖 AI Coach</button>
+    <button class="nav-tab" onclick="showPanel('checkin',this)">✅ Check-in</button>
+    <button class="nav-tab" onclick="showPanel('goals',this)">🎯 Goals</button>
+    <button class="nav-tab" onclick="showPanel('analytics',this)">📊 Analytics</button>
+    <button class="nav-tab" onclick="showPanel('community',this)">🌍 Community</button>
+  </div>
+  <div class="nav-user">
+    <div class="avatar" id="userAvatar">A</div>
+    <span id="userName">Arjun</span>
+  </div>
+</nav>
+
+<!-- DASHBOARD -->
+<div class="panel active" id="panel-dashboard">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:16px">
+    <div>
+      <h2 class="section-title" id="greetingText">Good morning, Arjun! 🌅</h2>
+      <p class="section-sub">Your Happiness Score is <strong style="color:var(--gold)">Flourishing</strong> — keep the momentum!</p>
+    </div>
+    <button class="btn-primary" onclick="showPanel('checkin',document.querySelectorAll('.nav-tab')[2])">Daily Check-in ✨</button>
+  </div>
+
+  <div style="display:grid;grid-template-columns:200px 1fr;gap:16px;margin-bottom:16px;align-items:start">
+    <div class="card ring-wrap">
+      <div class="card-title">Happiness Score</div>
+      <canvas id="happinessCanvas" width="160" height="160"></canvas>
+      <div class="ring-score" id="hScore">73</div>
+      <div class="ring-tier" id="hTier">🌱 Flourishing</div>
+    </div>
+    <div>
+      <div class="grid4" id="pillarCards">
+        <div class="pillar-card heart" onclick="showPanel('ai',document.querySelectorAll('.nav-tab')[1])">
+          <div class="pillar-emoji">❤️</div>
+          <div class="pillar-label">Heart</div>
+          <div class="pillar-score" id="heartScore">76</div>
+          <div class="pillar-bar-bg"><div class="pillar-bar" id="heartBar" style="width:0%"></div></div>
+        </div>
+        <div class="pillar-card hope" onclick="showPanel('ai',document.querySelectorAll('.nav-tab')[1])">
+          <div class="pillar-emoji">🌟</div>
+          <div class="pillar-label">Hope</div>
+          <div class="pillar-score" id="hopeScore">68</div>
+          <div class="pillar-bar-bg"><div class="pillar-bar" id="hopeBar" style="width:0%"></div></div>
+        </div>
+        <div class="pillar-card health" onclick="showPanel('ai',document.querySelectorAll('.nav-tab')[1])">
+          <div class="pillar-emoji">💪</div>
+          <div class="pillar-label">Health</div>
+          <div class="pillar-score" id="healthScore">71</div>
+          <div class="pillar-bar-bg"><div class="pillar-bar" id="healthBar" style="width:0%"></div></div>
+        </div>
+        <div class="pillar-card help" onclick="showPanel('ai',document.querySelectorAll('.nav-tab')[1])">
+          <div class="pillar-emoji">🤝</div>
+          <div class="pillar-label">Help</div>
+          <div class="pillar-score" id="helpScore">82</div>
+          <div class="pillar-bar-bg"><div class="pillar-bar" id="helpBar" style="width:0%"></div></div>
+        </div>
+      </div>
+      <div style="margin-top:16px">
+        <div class="card">
+          <div class="card-title">Today's Habits</div>
+          <div class="habit-strip" id="habitStrip"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="card-title">AI Insights</div>
+      <div id="insightsList"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">7-Day Happiness Trend</div>
+      <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- AI COACH -->
+<div class="panel" id="panel-ai">
+  <h2 class="section-title">AI Life Coach</h2>
+  <p class="section-sub">15 specialized agents powered by Claude — choose your coach</p>
+  <div class="chat-layout">
+    <div class="agent-list" id="agentList"></div>
+    <div class="chat-box">
+      <div class="chat-header">
+        <div class="agent-dot"></div>
+        <span id="activeAgentName">Life Coach</span>
+        <span style="font-size:0.75rem;color:var(--muted);margin-left:auto">Claude claude-sonnet-4-6 · Streaming</span>
+      </div>
+      <div class="chat-messages" id="chatMessages"></div>
+      <div class="chat-input-row">
+        <textarea class="chat-input" id="chatInput" rows="1" placeholder="Ask your AI coach anything..." onkeydown="handleChatKey(event)"></textarea>
+        <button class="send-btn" onclick="sendMessage()">Send ↑</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DAILY CHECK-IN -->
+<div class="panel" id="panel-checkin">
+  <h2 class="section-title">Daily Check-in</h2>
+  <p class="section-sub">5 minutes to calibrate your Happiness Score</p>
+  <div class="card" style="max-width:600px">
+    <div class="step-dots" id="stepDots"></div>
+
+    <div class="checkin-step active" id="step0">
+      <div class="card-title">How are you feeling right now?</div>
+      <div class="mood-grid">
+        <div class="mood-btn" onclick="selectMood(this,'😔','1')">😔<span class="mood-label">Sad</span></div>
+        <div class="mood-btn" onclick="selectMood(this,'😰','2')">😰<span class="mood-label">Anxious</span></div>
+        <div class="mood-btn" onclick="selectMood(this,'😐','3')">😐<span class="mood-label">Okay</span></div>
+        <div class="mood-btn" onclick="selectMood(this,'🙂','4')">🙂<span class="mood-label">Good</span></div>
+        <div class="mood-btn" onclick="selectMood(this,'😊','5')">😊<span class="mood-label">Happy</span></div>
+        <div class="mood-btn" onclick="selectMood(this,'😄','6')">😄<span class="mood-label">Great</span></div>
+        <div class="mood-btn" onclick="selectMood(this,'🤩','7')">🤩<span class="mood-label">Amazing</span></div>
+      </div>
+      <div class="slider-row" style="margin-top:20px">
+        <div class="slider-label"><span>Energy Level</span><span id="energyVal" style="color:var(--gold)">50</span></div>
+        <input type="range" min="0" max="100" value="50" oninput="document.getElementById('energyVal').textContent=this.value">
+      </div>
+      <div class="checkin-nav"><button class="btn-primary" onclick="ciNext()">Next →</button></div>
+    </div>
+
+    <div class="checkin-step" id="step1">
+      <div class="card-title">Rate your 4 pillars today</div>
+      <div class="slider-row"><div class="slider-label"><span>❤️ Heart — Relationships & Love</span><span id="hrtVal" style="color:var(--heart)">65</span></div><input type="range" min="0" max="100" value="65" oninput="document.getElementById('hrtVal').textContent=this.value;updateCheckinScores()"></div>
+      <div class="slider-row"><div class="slider-label"><span>🌟 Hope — Goals & Purpose</span><span id="hopVal" style="color:var(--hope)">70</span></div><input type="range" min="0" max="100" value="70" oninput="document.getElementById('hopVal').textContent=this.value;updateCheckinScores()"></div>
+      <div class="slider-row"><div class="slider-label"><span>💪 Health — Body & Mind</span><span id="helVal" style="color:var(--health)">60</span></div><input type="range" min="0" max="100" value="60" oninput="document.getElementById('helVal').textContent=this.value;updateCheckinScores()"></div>
+      <div class="slider-row"><div class="slider-label"><span>🤝 Help — Contribution</span><span id="hlpVal" style="color:var(--help)">75</span></div><input type="range" min="0" max="100" value="75" oninput="document.getElementById('hlpVal').textContent=this.value;updateCheckinScores()"></div>
+      <div class="checkin-nav">
+        <button class="btn-secondary" onclick="ciPrev()">← Back</button>
+        <button class="btn-primary" onclick="ciNext()">Next →</button>
+      </div>
+    </div>
+
+    <div class="checkin-step" id="step2">
+      <div class="card-title">3 things you're grateful for today 🙏</div>
+      <input class="grat-input" placeholder="I'm grateful for..." id="grat1">
+      <input class="grat-input" placeholder="I'm grateful for..." id="grat2">
+      <input class="grat-input" placeholder="I'm grateful for..." id="grat3">
+      <div class="checkin-nav">
+        <button class="btn-secondary" onclick="ciPrev()">← Back</button>
+        <button class="btn-primary" onclick="submitCheckin()">Complete Check-in ✨</button>
+      </div>
+    </div>
+
+    <div class="checkin-step" id="step3">
+      <div style="text-align:center;padding:20px">
+        <div style="font-size:4rem;margin-bottom:16px">🎉</div>
+        <div style="font-size:1.5rem;font-weight:800;color:var(--gold);margin-bottom:8px">Scores Updated!</div>
+        <div style="color:var(--muted);margin-bottom:24px">Your new Happiness Score is being calculated...</div>
+        <div style="font-size:3rem;font-weight:900;color:var(--gold)" id="newScore">--</div>
+        <div style="color:var(--muted);font-size:0.9rem;margin-bottom:24px">Happiness Score</div>
+        <button class="btn-primary" onclick="showPanel('dashboard',document.querySelectorAll('.nav-tab')[0])">View Dashboard →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- GOALS -->
+<div class="panel" id="panel-goals">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px">
+    <div>
+      <h2 class="section-title">Goals & Milestones</h2>
+      <p class="section-sub">Your active goals across all 5H pillars</p>
+    </div>
+    <button class="btn-primary" onclick="addGoalDemo()">+ New Goal</button>
+  </div>
+  <div id="goalsList"></div>
+  <div style="margin-top:24px">
+    <h3 style="margin-bottom:16px;color:var(--muted);font-size:0.9rem;text-transform:uppercase;letter-spacing:1px">Habit Tracker</h3>
+    <div class="grid3" id="habitsGrid"></div>
+  </div>
+</div>
+
+<!-- ANALYTICS -->
+<div class="panel" id="panel-analytics">
+  <h2 class="section-title">Life Analytics</h2>
+  <p class="section-sub">Deep insights into your happiness patterns</p>
+  <div class="grid2" style="margin-bottom:16px">
+    <div class="card">
+      <div class="card-title">30-Day Trend by Pillar</div>
+      <div class="chart-wrap"><canvas id="pillarTrendChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Pillar Distribution</div>
+      <div class="chart-wrap"><canvas id="radarChart"></canvas></div>
+    </div>
+  </div>
+  <div class="grid3">
+    <div class="card"><div class="card-title">Avg Happiness</div><div style="font-size:2.5rem;font-weight:800;color:var(--gold)">71.4</div><div style="font-size:0.8rem;color:var(--health)">↑ +4.2 vs last month</div></div>
+    <div class="card"><div class="card-title">Check-in Streak</div><div style="font-size:2.5rem;font-weight:800;color:var(--hope)">14 🔥</div><div style="font-size:0.8rem;color:var(--muted)">consecutive days</div></div>
+    <div class="card"><div class="card-title">Goals Completed</div><div style="font-size:2.5rem;font-weight:800;color:var(--health)">7</div><div style="font-size:0.8rem;color:var(--muted)">this quarter</div></div>
+  </div>
+</div>
+
+<!-- COMMUNITY -->
+<div class="panel" id="panel-community">
+  <h2 class="section-title">Community</h2>
+  <p class="section-sub">Connect with 12,400+ humans on the happiness journey</p>
+  <div class="grid2">
+    <div>
+      <div id="communityPosts"></div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title">Active Challenges</div>
+        <div id="challengesList"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Community Stats</div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Active Members</span><span style="font-weight:700">12,400</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Avg Happiness</span><span style="font-weight:700;color:var(--gold)">68.3</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Check-ins Today</span><span style="font-weight:700;color:var(--health)">3,241</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Goals Achieved</span><span style="font-weight:700;color:var(--hope)">847 this week</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────
+const state = {
+  userName: 'Arjun',
+  obStep: 0,
+  ciStep: 0,
+  selectedMood: null,
+  selectedGoal: null,
+  activeAgent: 0,
+  pillar: { heart: 76, hope: 68, health: 71, help: 82 },
+  happiness: 73,
+  chatHistory: {},
+};
+
+// ── Onboarding ─────────────────────────────────────────────────────
+function obNext() {
+  if (state.obStep === 1) {
+    const n = document.getElementById('obName').value.trim();
+    if (n) { state.userName = n; applyName(); }
+  }
+  document.getElementById('ob'+state.obStep).classList.remove('active');
+  state.obStep++;
+  document.getElementById('ob'+state.obStep).classList.add('active');
+  document.getElementById('obProgress').style.width = (state.obStep/3*100)+'%';
+}
+function selectGoal(el, g) { document.querySelectorAll('.ob-emoji-btn').forEach(b=>b.classList.remove('sel')); el.classList.add('sel'); state.selectedGoal=g; }
+function obFinish() {
+  document.getElementById('ob3').classList.remove('active');
+  document.getElementById('onboarding').style.display='none';
+  applyName();
+  toast('Welcome to SthirMind, '+state.userName+'! 🎉','success');
+  initAll();
+}
+function applyName() {
+  const n = state.userName;
+  document.getElementById('userName').textContent = n;
+  document.getElementById('userAvatar').textContent = n.charAt(0).toUpperCase();
+  const h = new Date().getHours();
+  const g = h<12?'morning':h<17?'afternoon':'evening';
+  document.getElementById('greetingText').textContent = 'Good '+g+', '+n+'! '+(h<12?'🌅':h<17?'☀️':'🌙');
+}
+
+// ── Panel routing ──────────────────────────────────────────────────
+function showPanel(id, tab) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  if(tab) tab.classList.add('active');
+  if(id==='analytics') initAnalyticsCharts();
+}
+
+// ── Happiness Ring ─────────────────────────────────────────────────
+function drawRing(score) {
+  const c = document.getElementById('happinessCanvas');
+  if(!c) return;
+  const ctx = c.getContext('2d');
+  const cx=80, cy=80, r=65, lw=12;
+  ctx.clearRect(0,0,160,160);
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2);
+  ctx.strokeStyle='rgba(255,255,255,0.06)'; ctx.lineWidth=lw; ctx.stroke();
+  const grad = ctx.createLinearGradient(0,0,160,160);
+  grad.addColorStop(0,'#F4A261'); grad.addColorStop(1,'#E63946');
+  ctx.beginPath(); ctx.arc(cx,cy,r,-Math.PI/2,-Math.PI/2+(score/100)*Math.PI*2);
+  ctx.strokeStyle=grad; ctx.lineWidth=lw; ctx.lineCap='round'; ctx.stroke();
+}
+function animateScore(target) {
+  let cur = 0;
+  const el = document.getElementById('hScore');
+  const iv = setInterval(()=>{
+    cur = Math.min(cur+1, target);
+    el.textContent = cur;
+    drawRing(cur);
+    if(cur>=target) clearInterval(iv);
+  }, 20);
+}
+
+// ── Pillar bars ────────────────────────────────────────────────────
+function animatePillarBars() {
+  setTimeout(()=>{
+    document.getElementById('heartBar').style.width=state.pillar.heart+'%';
+    document.getElementById('hopeBar').style.width=state.pillar.hope+'%';
+    document.getElementById('healthBar').style.width=state.pillar.health+'%';
+    document.getElementById('helpBar').style.width=state.pillar.help+'%';
+  }, 300);
+}
+
+// ── Habits ─────────────────────────────────────────────────────────
+const habits = [
+  {emoji:'💧',label:'Hydrate 2L',done:true,streak:12},
+  {emoji:'🧘',label:'Meditate',done:false,streak:5},
+  {emoji:'📖',label:'Read 20min',done:true,streak:8},
+  {emoji:'🏃',label:'Exercise',done:false,streak:3},
+  {emoji:'🙏',label:'Gratitude',done:true,streak:21},
+];
+function buildHabits() {
+  const strip = document.getElementById('habitStrip');
+  if(!strip) return;
+  strip.innerHTML = habits.map((h,i)=>`
+    <div class="habit-chip ${h.done?'done':''}" onclick="toggleHabit(${i},this)">
+      ${h.emoji} ${h.label} <span class="streak">🔥${h.streak}</span>
+    </div>`).join('');
+}
+function toggleHabit(i, el) {
+  habits[i].done=!habits[i].done;
+  el.classList.toggle('done');
+  if(habits[i].done) { habits[i].streak++; toast(habits[i].emoji+' '+habits[i].label+' done! 🔥','success'); }
+}
+
+// ── Insights ───────────────────────────────────────────────────────
+const insights = [
+  {pillar:'health',title:'Sleep Pattern',text:'Your health scores dip on days after <6h sleep. Aim for consistent 7-8h for +8 pts.'},
+  {pillar:'hope',title:'Goal Momentum',text:'You\'re 68% towards your Q3 goal. At current pace, you\'ll complete it 12 days early!'},
+  {pillar:'heart',title:'Connection Boost',text:'Your heart score peaks after social interactions. Schedule a call today for a predicted +5 pts.'},
+];
+function buildInsights() {
+  const el = document.getElementById('insightsList');
+  if(!el) return;
+  el.innerHTML = insights.map(i=>`
+    <div class="insight-item ${i.pillar}">
+      <div class="insight-title">${i.title}</div>
+      <div class="insight-text">${i.text}</div>
+    </div>`).join('');
+}
+
+// ── Trend Chart ────────────────────────────────────────────────────
+function buildTrendChart() {
+  const ctx = document.getElementById('trendChart');
+  if(!ctx || ctx._chart) return;
+  const labels = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const data = [65,68,72,70,74,71,73];
+  ctx._chart = new Chart(ctx, {
+    type:'line',
+    data:{labels, datasets:[{label:'Happiness',data,borderColor:'#F4A261',backgroundColor:'rgba(244,162,97,.12)',tension:.4,fill:true,pointBackgroundColor:'#F4A261',pointRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#8B9BB4'}},y:{grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#8B9BB4'},min:50,max:100}}}
+  });
+}
+
+// ── Analytics Charts ───────────────────────────────────────────────
+let analyticsBuilt = false;
+function initAnalyticsCharts() {
+  if(analyticsBuilt) return; analyticsBuilt=true;
+  const days = Array.from({length:30},(_,i)=>i+1);
+  const ctx1 = document.getElementById('pillarTrendChart');
+  new Chart(ctx1,{type:'line',data:{labels:days,datasets:[
+    {label:'Heart',data:days.map(d=>60+Math.sin(d*.3)*10+Math.random()*5),borderColor:'#E63946',tension:.4,fill:false,pointRadius:0},
+    {label:'Hope',data:days.map(d=>55+Math.cos(d*.25)*12+Math.random()*5),borderColor:'#457B9D',tension:.4,fill:false,pointRadius:0},
+    {label:'Health',data:days.map(d=>65+Math.sin(d*.2)*8+Math.random()*5),borderColor:'#52B788',tension:.4,fill:false,pointRadius:0},
+    {label:'Help',data:days.map(d=>75+Math.sin(d*.15)*6+Math.random()*5),borderColor:'#7B2D8B',tension:.4,fill:false,pointRadius:0},
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#8B9BB4'}}},scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#8B9BB4'}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#8B9BB4'},min:40,max:100}}}});
+  const ctx2 = document.getElementById('radarChart');
+  new Chart(ctx2,{type:'radar',data:{labels:['Heart','Hope','Health','Help'],datasets:[{label:'This Week',data:[76,68,71,82],backgroundColor:'rgba(244,162,97,.2)',borderColor:'#F4A261',pointBackgroundColor:'#F4A261'},{label:'Last Week',data:[70,65,68,78],backgroundColor:'rgba(69,123,157,.15)',borderColor:'#457B9D',pointBackgroundColor:'#457B9D'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#8B9BB4'}}},scales:{r:{grid:{color:'rgba(255,255,255,.08)'},ticks:{color:'#8B9BB4',backdropColor:'transparent'},pointLabels:{color:'#E8F0FE'},min:0,max:100}}}});
+}
+
+// ── AI Chat ────────────────────────────────────────────────────────
+const agents = [
+  {name:'Life Coach',emoji:'🧭',role:'Holistic life guidance'},
+  {name:'Health Coach',emoji:'💪',role:'Body & mind optimization'},
+  {name:'Purpose Coach',emoji:'🌟',role:'Goals & meaning'},
+  {name:'Relationship',emoji:'❤️',role:'Heart & connections'},
+  {name:'Mental Wellness',emoji:'🧘',role:'Emotional balance'},
+  {name:'Executive',emoji:'💼',role:'Peak performance'},
+  {name:'Meditation',emoji:'☮️',role:'Mindfulness practice'},
+  {name:'Happiness',emoji:'😊',role:'Joy engineering'},
+];
+const agentResponses = {
+  0: ["I see your happiness score is at 73 — you're in the Flourishing tier! Your strongest pillar is Help (82), which suggests you find deep meaning in contribution. Let's explore how to leverage that to boost your Hope score too. What's one goal you've been procrastinating on?",
+     "Based on your recent check-ins, I notice your energy dips on Thursdays. This pattern correlates with your mid-week stress peaks. Have you considered a Thursday morning meditation ritual? Studies show even 10 minutes reduces cortisol by 23%.",
+     "Your 5H balance is beautiful — the gap between your highest (Help: 82) and lowest (Hope: 68) is only 14 points. Most people have gaps of 30+. This tells me you're a fundamentally integrated person. Let's close that 14-point gap together. What does your ideal future look like in 1 year?"],
+  1: ["Your health score of 71 is solid! I can see from your habit data that meditation is your weakest habit (only 3 days this week). Here's a protocol: Start with just 5 minutes of box breathing — 4 in, 4 hold, 4 out, 4 hold. Do this before checking your phone. Can you commit to this tomorrow morning?",
+     "Sleep is the #1 health lever in your data. Your health score drops 8 points on days after poor sleep. Try the 10-3-2-1-0 protocol: No caffeine 10h before bed, no heavy food 3h before, no work 2h before, no screens 1h before, zero snooze hits."],
+  2: ["Your Hope score is 68 — the 'developing' range. But here's the insight: hope isn't about optimism, it's about agency. Let's audit your top 3 goals. Are they SMART? Are they aligned with your deepest values? Tell me your #1 life goal right now and I'll help you break it into weekly micro-actions.",
+     "I've analyzed your goal check-in patterns. You're 73% more likely to achieve goals you write down AND visualize. Your vision board has 4 elements — let's add emotion to each one. What does achieving your #1 goal FEEL like?"],
+  3: ["Your heart score of 76 is strong! This reflects the quality of your relationships. I notice you haven't logged a meaningful conversation in 3 days. Research shows meaningful connection (30+ min deep talk) boosts heart score by 6-12 points. Who in your life do you want to reconnect with?",
+     "Love languages are powerful. If you know yours and your close ones', interactions become 3x more satisfying. What's your primary love language? (Words, Acts, Gifts, Time, Touch) — I can personalize your relationship recommendations."],
+  4: ["I sense some patterns in your recent journal entries — the word 'overwhelmed' appeared 3 times this week. That's your mind asking for space. Let's do a quick cognitive defusion exercise: name your top stressor, then say 'I notice I'm having the thought that...' This creates distance from the narrative.",
+     "Your emotional baseline is healthy (average mood 4.2/7 this week). The dips on Wednesday evenings are interesting — what happens those nights? Understanding the trigger is the first step to building resilience."],
+  5: ["Executive performance is about energy management, not time management. Your data shows peak cognitive performance between 9-11am and 3-5pm. Are you doing deep work during these windows, or getting derailed by meetings?",
+     "Flow state is your competitive advantage. To enter flow: clear task with defined goal, challenge-skill ratio 4:3, zero interruptions for 90 minutes. What's your most important deep work project right now? Let's design your perfect flow session."],
+  6: ["Let's begin with a body scan. Close your eyes. Start at the crown of your head... feel any tension? Move to your jaw, shoulders, chest, belly. Whatever you find, just observe without judgment. The fact that you're here is itself a mindfulness act. 🙏",
+     "The Wim Hof breathing method: 30 deep breaths (in through nose, out through mouth), then exhale fully and hold as long as comfortable, then inhale deeply and hold 15 seconds. This activates your parasympathetic nervous system and has been shown to reduce anxiety by up to 40%."],
+  7: ["Your happiness formula: H = 0.28×76 + 0.25×68 + 0.27×71 + 0.20×82 = 21.28 + 17.00 + 19.17 + 16.40 = 73.85. You're 6 points from Thriving (80+)! The fastest path: boost Health by 10 points (adds 2.7 to your score) AND Hope by 10 points (adds 2.5). That gets you to 79+ in 30 days. Ready for a 30-day transformation plan?",
+     "Joy engineering is a skill. The PERMA model says positive emotions, engagement, relationships, meaning, and accomplishment all contribute independently. Your weakest PERMA element based on your data? Engagement — you're not in flow often enough. What activities make you lose track of time?"],
+};
+function buildAgentList() {
+  const el = document.getElementById('agentList');
+  if(!el) return;
+  el.innerHTML = agents.map((a,i)=>`
+    <button class="agent-btn ${i===0?'active':''}" onclick="switchAgent(${i},this)">
+      ${a.emoji} ${a.name}<span>${a.role}</span>
+    </button>`).join('');
+}
+function switchAgent(i, btn) {
+  state.activeAgent = i;
+  document.querySelectorAll('.agent-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('activeAgentName').textContent = agents[i].emoji+' '+agents[i].name;
+  if(!state.chatHistory[i]) {
+    state.chatHistory[i] = [];
+    const msgs = document.getElementById('chatMessages');
+    msgs.innerHTML = '';
+    setTimeout(()=>addAIMessage(i, agentResponses[i][0]), 600);
+  } else {
+    renderHistory(i);
+  }
+}
+function renderHistory(agentIdx) {
+  const msgs = document.getElementById('chatMessages');
+  msgs.innerHTML = '';
+  state.chatHistory[agentIdx].forEach(m=>appendMsg(m.role, m.content));
+}
+function appendMsg(role, text) {
+  const msgs = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.className = 'msg '+(role==='ai'?'ai':'user');
+  div.textContent = text;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return div;
+}
+function addAIMessage(agentIdx, text) {
+  const msgs = document.getElementById('chatMessages');
+  const typing = document.createElement('div');
+  typing.className = 'typing-indicator';
+  typing.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+  msgs.appendChild(typing);
+  msgs.scrollTop = msgs.scrollHeight;
+  setTimeout(()=>{
+    typing.remove();
+    const div = appendMsg('ai', '');
+    let i = 0;
+    const iv = setInterval(()=>{
+      div.textContent += text[i++];
+      msgs.scrollTop = msgs.scrollHeight;
+      if(i>=text.length) { clearInterval(iv); if(!state.chatHistory[agentIdx]) state.chatHistory[agentIdx]=[]; state.chatHistory[agentIdx].push({role:'ai',content:text}); }
+    }, 18);
+  }, 800 + Math.random()*600);
+}
+function sendMessage() {
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if(!text) return;
+  input.value = '';
+  appendMsg('user', text);
+  if(!state.chatHistory[state.activeAgent]) state.chatHistory[state.activeAgent]=[];
+  state.chatHistory[state.activeAgent].push({role:'user',content:text});
+  const responses = agentResponses[state.activeAgent];
+  const reply = responses[Math.floor(Math.random()*responses.length)];
+  addAIMessage(state.activeAgent, reply);
+}
+function handleChatKey(e) { if(e.key==='Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
+
+// ── Check-in ───────────────────────────────────────────────────────
+function buildStepDots() {
+  const el = document.getElementById('stepDots');
+  if(!el) return;
+  el.innerHTML = [0,1,2].map(i=>`<div class="step-dot ${i===0?'active':''}" id="dot${i}"></div>`).join('');
+}
+function selectMood(el, emoji, val) {
+  document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');
+  state.selectedMood = val;
+}
+function ciNext() {
+  document.getElementById('step'+state.ciStep).classList.remove('active');
+  document.getElementById('dot'+state.ciStep)?.classList.remove('active');
+  state.ciStep++;
+  document.getElementById('step'+state.ciStep).classList.add('active');
+  document.getElementById('dot'+Math.min(state.ciStep,2))?.classList.add('active');
+}
+function ciPrev() {
+  document.getElementById('step'+state.ciStep).classList.remove('active');
+  document.getElementById('dot'+state.ciStep)?.classList.remove('active');
+  state.ciStep--;
+  document.getElementById('step'+state.ciStep).classList.add('active');
+  document.getElementById('dot'+state.ciStep)?.classList.add('active');
+}
+function updateCheckinScores() {
+  const h=+document.getElementById('hrtVal').textContent;
+  const ho=+document.getElementById('hopVal').textContent;
+  const he=+document.getElementById('helVal').textContent;
+  const hl=+document.getElementById('hlpVal').textContent;
+  state.pillar.heart=h; state.pillar.hope=ho; state.pillar.health=he; state.pillar.help=hl;
+}
+function submitCheckin() {
+  const h=state.pillar.heart, ho=state.pillar.hope, he=state.pillar.health, hl=state.pillar.help;
+  const newH = Math.round(0.28*h + 0.25*ho + 0.27*he + 0.20*hl);
+  state.happiness = newH;
+  document.getElementById('step2').classList.remove('active');
+  document.getElementById('step3').classList.add('active');
+  document.getElementById('newScore').textContent = newH;
+  // Update dashboard
+  document.getElementById('heartScore').textContent=h;
+  document.getElementById('hopeScore').textContent=ho;
+  document.getElementById('healthScore').textContent=he;
+  document.getElementById('helpScore').textContent=hl;
+  document.getElementById('hScore').textContent=newH;
+  animatePillarBars();
+  drawRing(newH);
+  updateTier(newH);
+  toast('Check-in complete! Happiness: '+newH+'  🎉','success');
+  state.ciStep=0;
+}
+function updateTier(s) {
+  const t = s>=80?'🚀 Thriving':s>=60?'🌱 Flourishing':s>=40?'🌿 Developing':'🌱 Struggling';
+  const el = document.getElementById('hTier');
+  if(el) el.textContent=t;
+}
+
+// ── Goals ──────────────────────────────────────────────────────────
+const goalsData = [
+  {emoji:'🏃',title:'Run 5K in under 25 min',pillar:'health',pct:62,status:'active',deadline:'Aug 2026'},
+  {emoji:'📚',title:'Read 24 books this year',pillar:'hope',pct:83,status:'active',deadline:'Dec 2026'},
+  {emoji:'🧘',title:'30-day meditation streak',pillar:'health',pct:40,status:'active',deadline:'Jul 2026'},
+  {emoji:'💼',title:'Launch SthirMind Beta',pillar:'hope',pct:91,status:'active',deadline:'Jul 2026'},
+  {emoji:'❤️',title:'Weekly family dinner ritual',pillar:'heart',pct:75,status:'paused',deadline:'Ongoing'},
+];
+function buildGoals() {
+  const el = document.getElementById('goalsList');
+  if(!el) return;
+  el.innerHTML = goalsData.map((g,i)=>`
+    <div class="goal-item">
+      <div class="goal-icon">${g.emoji}</div>
+      <div class="goal-info">
+        <div class="goal-title-text">${g.title}</div>
+        <div class="goal-meta">${g.pillar.charAt(0).toUpperCase()+g.pillar.slice(1)} · Due ${g.deadline} <span class="badge ${g.status}">${g.status}</span></div>
+      </div>
+      <div class="goal-progress-wrap">
+        <div class="goal-pct">${g.pct}%</div>
+        <div class="goal-bar-bg"><div class="goal-bar" id="gbar${i}" style="width:0%"></div></div>
+      </div>
+    </div>`).join('');
+  setTimeout(()=>goalsData.forEach((_,i)=>{document.getElementById('gbar'+i).style.width=goalsData[i].pct+'%';}),400);
+}
+function buildHabitsGrid() {
+  const el = document.getElementById('habitsGrid');
+  if(!el) return;
+  const days = ['M','T','W','T','F','S','S'];
+  el.innerHTML = habits.map(h=>`
+    <div class="card">
+      <div class="card-title">${h.emoji} ${h.label}</div>
+      <div style="display:flex;gap:6px;margin-top:8px">
+        ${days.map((_,i)=>`<div style="width:28px;height:28px;border-radius:6px;background:${i<5?'rgba(82,183,136,.3)':'rgba(255,255,255,.06)'};border:1px solid ${i<5?'var(--health)':'var(--border)'}"></div>`).join('')}
+      </div>
+      <div style="font-size:0.8rem;color:var(--gold);margin-top:8px">🔥 ${h.streak} day streak</div>
+    </div>`).join('');
+}
+function addGoalDemo() {
+  toast('Goal creation modal coming in v1.0! 🚀','info');
+}
+
+// ── Community ──────────────────────────────────────────────────────
+const posts = [
+  {name:'Priya S.',score:81,color:'#E63946',text:'Just hit my 30-day meditation streak! My anxiety has reduced so much. The SthirMind AI coach literally changed my morning routine 🧘‍♀️',likes:24,pillar:'health'},
+  {name:'Rahul M.',score:74,color:'#457B9D',text:'My Hope score jumped from 58 to 74 in 3 weeks by using the goal-tracking feature consistently. The AI insights are mind-blowing — it predicted my motivation dip on Tuesdays!',likes:31,pillar:'hope'},
+  {name:'Ananya K.',score:88,color:'#52B788',text:'89 day check-in streak! 🔥 Pro tip: do your daily check-in right after your morning coffee. Same time, same routine. The consistency is everything.',likes:47,pillar:'health'},
+];
+function buildCommunity() {
+  const el = document.getElementById('communityPosts');
+  if(!el) return;
+  el.innerHTML = posts.map((p,i)=>`
+    <div class="post-item">
+      <div class="post-header">
+        <div class="post-avatar" style="background:${p.color}">${p.name.charAt(0)}</div>
+        <div><div style="font-weight:600">${p.name}</div><div class="post-meta">Happiness ${p.score} · ${p.pillar}</div></div>
+      </div>
+      <div class="post-text">${p.text}</div>
+      <div class="post-actions">
+        <button class="post-action" onclick="likePost(${i},this)">❤️ <span class="like-count">${p.likes}</span></button>
+        <button class="post-action" onclick="toast('Reply feature coming soon!','info')">💬 Reply</button>
+        <button class="post-action" onclick="toast('Saved!','success')">🔖 Save</button>
+      </div>
+    </div>`).join('');
+  buildChallenges();
+}
+function likePost(i, btn) {
+  posts[i].likes++;
+  btn.querySelector('.like-count').textContent = posts[i].likes;
+}
+const challenges = [
+  {emoji:'💧',title:'7-Day Hydration Challenge',participants:342,days:4},
+  {emoji:'🧘',title:'Morning Meditation Month',participants:891,days:18},
+  {emoji:'📖',title:'Read 1 Book This Month',participants:234,days:12},
+];
+function buildChallenges() {
+  const el = document.getElementById('challengesList');
+  if(!el) return;
+  el.innerHTML = challenges.map(c=>`
+    <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:1.5rem">${c.emoji}</span>
+      <div style="flex:1">
+        <div style="font-size:0.88rem;font-weight:600">${c.title}</div>
+        <div style="font-size:0.75rem;color:var(--muted)">${c.participants} participants · ${c.days} days left</div>
+      </div>
+      <button class="btn-secondary" style="padding:6px 12px;font-size:0.8rem" onclick="toast('Joined! 🎉','success')">Join</button>
+    </div>`).join('');
+}
+
+// ── Toast ──────────────────────────────────────────────────────────
+function toast(msg, type='info') {
+  const t = document.createElement('div');
+  t.className = 'toast '+type;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(()=>{ t.style.opacity='0'; t.style.transition='opacity .3s'; setTimeout(()=>t.remove(),300); }, 3000);
+}
+
+// ── Init ───────────────────────────────────────────────────────────
+function initAll() {
+  drawRing(0);
+  animateScore(state.happiness);
+  animatePillarBars();
+  buildHabits();
+  buildInsights();
+  buildTrendChart();
+  buildAgentList();
+  buildStepDots();
+  buildGoals();
+  buildHabitsGrid();
+  buildCommunity();
+  // First AI message
+  setTimeout(()=>{
+    if(!state.chatHistory[0]) {
+      state.chatHistory[0]=[];
+      addAIMessage(0, agentResponses[0][0]);
+    }
+  }, 500);
+}
+</script>
+</body>
+</html>
