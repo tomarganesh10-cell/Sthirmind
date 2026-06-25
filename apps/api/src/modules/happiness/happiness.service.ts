@@ -285,6 +285,41 @@ export class HappinessService {
     return breakdown;
   }
 
+  async getTodayScore(userId: string) {
+    const today = new Date(); today.setHours(0,0,0,0);
+    return this.prisma.dailyScore.findFirst({ where: { userId, date: today } });
+  }
+
+  async getScoreHistory(userId: string, days = 30) {
+    const from = new Date(); from.setDate(from.getDate() - days);
+    return this.prisma.dailyScore.findMany({
+      where: { userId, date: { gte: from } },
+      orderBy: { date: 'desc' },
+    });
+  }
+
+  async getLatestWeeklyReport(userId: string) {
+    return this.prisma.weeklyReport.findFirst({ where: { userId }, orderBy: { weekStart: 'desc' } });
+  }
+
+  async computeAndStoreDailyScore(userId: string, dto: { heartScore: number; hopeScore: number; healthScore: number; helpScore: number; mood?: number; energyLevel?: number; notes?: string; gratitudeItems?: string[] }) {
+    const { heartScore, hopeScore, healthScore, helpScore, mood, energyLevel, notes, gratitudeItems } = dto;
+    const breakdown = this.computeHappiness({ heart: heartScore, hope: hopeScore, health: healthScore, help: helpScore });
+    const today = new Date(); today.setHours(0,0,0,0);
+
+    const score = await this.prisma.dailyScore.upsert({
+      where: { userId_date: { userId, date: today } },
+      create: { userId, date: today, heartScore, hopeScore, healthScore, helpScore, totalScore: breakdown.happiness, mood, energyLevel, notes },
+      update: { heartScore, hopeScore, healthScore, helpScore, totalScore: breakdown.happiness, mood, energyLevel, notes },
+    });
+
+    if (gratitudeItems?.length) {
+      await this.prisma.gratitudeEntry.create({ data: { userId, items: gratitudeItems, mood } });
+    }
+
+    return { score, breakdown };
+  }
+
   private sleepScore(hrs: number, quality: number): number {
     // Optimal: 7-9 hours
     let hrsScore = 0;

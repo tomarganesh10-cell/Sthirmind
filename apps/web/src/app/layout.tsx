@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Inter, Playfair_Display } from 'next/font/google';
 import { ClerkProvider } from '@clerk/nextjs';
 import { Providers } from './providers';
+import { Nav } from '@/components/layout/Nav';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
@@ -38,7 +39,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} ${playfair.variable} font-sans antialiased`}>
         <ClerkProvider>
-          <Providers>{children}</Providers>
+          <Providers>
+            <Nav />
+            <main>{children}</main>
+          </Providers>
         </ClerkProvider>
       </body>
     </html>

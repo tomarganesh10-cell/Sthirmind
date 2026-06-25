@@ -450,4 +450,27 @@ Never be generic. Never be preachy. Be warm, wise, and practical.`;
     }
     return actions.slice(0, 3);
   }
+
+  async getSessions(userId: string) {
+    return this.prisma.aiSession.findMany({
+      where: { userId },
+      orderBy: { updatedAt: 'desc' },
+      take: 20,
+    });
+  }
+
+  async getMessages(sessionId: string) {
+    return this.prisma.aiMessage.findMany({
+      where: { sessionId },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  async getInsights(userId: string) {
+    return this.prisma.aiInsight.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+    });
+  }
 }
