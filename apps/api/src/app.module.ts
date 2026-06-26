@@ -17,6 +17,7 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { WisdomModule } from './modules/wisdom/wisdom.module';
 import { PrismaModule } from './shared/prisma/prisma.module';
 import { RedisModule } from './shared/redis/redis.module';
 
@@ -48,6 +49,7 @@ import { RedisModule } from './shared/redis/redis.module';
     AdminModule,
     SubscriptionsModule,
     NotificationsModule,
+    WisdomModule,
   ],
 })
 export class AppModule {}

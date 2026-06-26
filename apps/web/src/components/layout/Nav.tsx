@@ -13,6 +13,7 @@ const links = [
   { href: '/help', label: 'Help', icon: '🤝' },
   { href: '/analytics', label: 'Analytics', icon: '📊' },
   { href: '/community', label: 'Community', icon: '🌍' },
+  { href: '/wisdom', label: 'Wisdom', icon: '📚' },
 ];
 
 export function Nav() {
