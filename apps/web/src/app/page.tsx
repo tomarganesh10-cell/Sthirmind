@@ -428,7 +428,7 @@ export default function HomePage() {
             </div>
             <span className="font-serif font-bold text-white">SthirMind</span>
           </div>
-          <p className="text-sm">© 2026 SthirMind · sthirmind.playplate.in · Lead With Clarity. Build With Equanimity.</p>
+          <p className="text-sm">© 2026 SthirMind · sthirmind.hopecommonersfoundation.com · Lead With Clarity. Build With Equanimity.</p>
         </div>
       </footer>
     </div>

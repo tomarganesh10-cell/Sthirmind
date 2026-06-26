@@ -63,7 +63,7 @@ jobs:
           file: apps/web/Dockerfile
           push: true
           build-args: |
-            NEXT_PUBLIC_API_URL=https://sthirmind.playplate.in/api/v1
+            NEXT_PUBLIC_API_URL=https://sthirmind.hopecommonersfoundation.com/api/v1
             NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
           tags: |
             ${{ env.IMAGE_PREFIX }}/sthirmind-web:${{ steps.meta.outputs.version }}
@@ -122,5 +122,5 @@ jobs:
       - name: Health check
         run: |
           sleep 20
-          curl -f https://sthirmind.playplate.in/health || exit 1
+          curl -f https://sthirmind.hopecommonersfoundation.com/health || exit 1
           echo "✅ Health check passed"

@@ -3,7 +3,7 @@
 # Run on your VPS: bash deploy.sh
 set -e
 
-DOMAIN="sthirmind.playplate.in"
+DOMAIN="sthirmind.hopecommonersfoundation.com"
 APP_DIR="/opt/sthirmind"
 COMPOSE="docker compose -f $APP_DIR/infra/docker-compose.prod.yml"
 

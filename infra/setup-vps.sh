@@ -3,7 +3,7 @@
 # Run as root on a fresh Ubuntu 22.04 VPS
 set -e
 
-DOMAIN="sthirmind.playplate.in"
+DOMAIN="sthirmind.hopecommonersfoundation.com"
 APP_DIR="/opt/sthirmind"
 APP_USER="sthirmind"
 
