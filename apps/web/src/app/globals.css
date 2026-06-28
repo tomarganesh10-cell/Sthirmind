@@ -77,6 +77,33 @@
   border: 1px solid rgba(255,255,255,0.1);
 }
 
+/* ── Mobile / PWA ─────────────────────────────────────────── */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Safe area for PWA / notch phones */
+.safe-area-pb { padding-bottom: env(safe-area-inset-bottom, 0px); }
+.safe-area-pt { padding-top: env(safe-area-inset-top, 0px); }
+
+/* Touch feedback */
+@media (hover: none) {
+  button:active, a:active { opacity: 0.75; }
+}
+
+/* Prevent text selection on tap */
+.no-select { -webkit-user-select: none; user-select: none; }
+
+/* PWA standalone — hide browser chrome padding */
+@media (display-mode: standalone) {
+  body { padding-top: env(safe-area-inset-top); }
+}
+
+/* Mobile-first tap targets */
+@media (max-width: 768px) {
+  button, a { min-height: 44px; }
+  input, textarea, select { font-size: 16px !important; } /* prevent iOS zoom */
+}
+
 /* ── Scrollbar ────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }

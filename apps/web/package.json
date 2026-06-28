@@ -36,7 +36,9 @@
     "tailwindcss-animate": "^1.0.7",
     "zustand": "^4.5.4",
     "zod": "^3.23.0",
-    "@hookform/resolvers": "^3.9.0"
+    "@hookform/resolvers": "^3.9.0",
+    "@ducanh2912/next-pwa": "^10.2.9",
+    "workbox-window": "^7.3.0"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",

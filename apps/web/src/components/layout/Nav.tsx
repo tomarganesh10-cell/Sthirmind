@@ -23,8 +23,9 @@ export function Nav() {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0D1B2A]/95 backdrop-blur-lg border-b border-white/8 flex items-center justify-between px-4 h-14">
-      <Link href="/dashboard" className="font-extrabold text-lg text-[#F4A261]">Sthir<span className="text-white">Mind</span></Link>
-      <div className="flex gap-1 overflow-x-auto scrollbar-hide">
+      <Link href="/dashboard" className="font-extrabold text-lg text-[#F4A261]">🧘<span className="hidden sm:inline"> Sthir</span><span className="text-white hidden sm:inline">Mind</span></Link>
+      {/* Desktop nav — hidden on mobile */}
+      <div className="hidden md:flex gap-1 overflow-x-auto scrollbar-hide">
         {links.map(l => (
           <Link key={l.href} href={l.href}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${pathname.startsWith(l.href) ? 'bg-white/10 text-white' : 'text-[#8B9BB4] hover:text-white'}`}>
@@ -32,8 +33,12 @@ export function Nav() {
           </Link>
         ))}
       </div>
+      {/* Mobile: show page title */}
+      <span className="md:hidden text-white font-bold text-sm">
+        {links.find(l => pathname.startsWith(l.href))?.label ?? 'SthirMind'}
+      </span>
       <div className="flex items-center gap-3">
-        <Link href="/profile" className="text-xs text-[#8B9BB4] hover:text-white">Profile</Link>
+        <Link href="/profile" className="hidden md:block text-xs text-[#8B9BB4] hover:text-white">Profile</Link>
         <UserButton afterSignOutUrl="/" />
       </div>
     </nav>
