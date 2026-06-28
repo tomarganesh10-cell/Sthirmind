@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "SthirMind",
+    "slug": "sthirmind",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "sthirmind",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0D1B2A"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.hopecommonersfoundation.sthirmind",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "SthirMind uses the microphone for voice journaling"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0D1B2A"
+      },
+      "package": "com.hopecommonersfoundation.sthirmind",
+      "permissions": ["RECORD_AUDIO"]
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      [
+        "expo-av",
+        { "microphonePermission": "SthirMind uses microphone for voice journaling" }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

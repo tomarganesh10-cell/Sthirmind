@@ -1,0 +1,31 @@
+{
+  "name": "SthirMind — Wisdom & AI Coach",
+  "short_name": "SthirMind",
+  "description": "The world's most advanced AI-powered Human Operating System. Read, listen, and grow with 45 wisdom books.",
+  "start_url": "/wisdom",
+  "display": "standalone",
+  "background_color": "#0D1B2A",
+  "theme_color": "#1B3A6B",
+  "orientation": "portrait-primary",
+  "categories": ["education", "books", "productivity", "lifestyle"],
+  "lang": "en",
+  "scope": "/",
+  "icons": [
+    { "src": "/icons/icon-72.png",  "sizes": "72x72",   "type": "image/png", "purpose": "maskable any" },
+    { "src": "/icons/icon-96.png",  "sizes": "96x96",   "type": "image/png", "purpose": "maskable any" },
+    { "src": "/icons/icon-128.png", "sizes": "128x128", "type": "image/png", "purpose": "maskable any" },
+    { "src": "/icons/icon-144.png", "sizes": "144x144", "type": "image/png", "purpose": "maskable any" },
+    { "src": "/icons/icon-152.png", "sizes": "152x152", "type": "image/png", "purpose": "maskable any" },
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable any" },
+    { "src": "/icons/icon-384.png", "sizes": "384x384", "type": "image/png", "purpose": "maskable any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable any" }
+  ],
+  "screenshots": [
+    { "src": "/screenshots/wisdom-home.png", "sizes": "390x844", "type": "image/png", "form_factor": "narrow", "label": "Wisdom Library" },
+    { "src": "/screenshots/book-audio.png",  "sizes": "390x844", "type": "image/png", "form_factor": "narrow", "label": "Human Voice Audio" }
+  ],
+  "shortcuts": [
+    { "name": "Daily Wisdom", "short_name": "Daily", "description": "Today's wisdom quote", "url": "/wisdom/daily", "icons": [{ "src": "/icons/icon-96.png", "sizes": "96x96" }] },
+    { "name": "My Library",  "short_name": "Library", "description": "My reading progress", "url": "/wisdom/library", "icons": [{ "src": "/icons/icon-96.png", "sizes": "96x96" }] }
+  ]
+}

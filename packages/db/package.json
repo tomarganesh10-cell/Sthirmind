@@ -1,0 +1,17 @@
+{
+  "name": "@sthirmind/db",
+  "version": "1.0.0",
+  "main": "./src/index.ts",
+  "scripts": {
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate deploy",
+    "db:seed": "tsx src/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.12.0"
+  },
+  "devDependencies": {
+    "prisma": "^5.12.0",
+    "tsx": "^4.7.0"
+  }
+}
