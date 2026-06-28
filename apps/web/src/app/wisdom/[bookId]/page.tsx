@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
 import { AudioPlayer } from '@/components/wisdom/AudioPlayer';
-import { VoiceSelector, VOICES } from '@/components/wisdom/VoiceSelector';
 import Link from 'next/link';
 
 const SUMMARY_LENGTHS = [
@@ -22,7 +21,6 @@ export default function BookDetailPage({ params }: { params: { bookId: string } 
 
   const [tab, setTab] = useState('Summary');
   const [summaryLength, setSummaryLength] = useState('five_min');
-  const [selectedVoice, setSelectedVoice] = useState('mentor');
   const [chatInput, setChatInput] = useState('');
   const [chatSession, setChatSession] = useState<string | null>(null);
   const [messages, setMessages] = useState<{ role: string; content: string }[]>([]);
@@ -201,65 +199,50 @@ export default function BookDetailPage({ params }: { params: { bookId: string } 
 
         {/* AUDIO TAB */}
         {tab === 'Audio' && (
-          <div className="grid md:grid-cols-[1fr_360px] gap-6">
-            {/* Left: Player + Generate */}
-            <div className="space-y-5">
-              {/* Summary length selector */}
-              <div>
-                <p className="text-[#8B9BB4] text-xs uppercase tracking-widest font-semibold mb-3">Summary Length</p>
-                <div className="flex gap-2">
-                  {SUMMARY_LENGTHS.map(s => (
-                    <button key={s.id} onClick={() => setSummaryLength(s.id)}
-                      className={`flex-1 rounded-xl p-3 text-center border transition-all ${summaryLength === s.id ? 'border-[#F4A261] bg-[#F4A261]/10' : 'border-white/10 bg-[#1A2A3D] hover:border-white/30'}`}>
-                      <div className="text-lg mb-1">{s.icon}</div>
-                      <p className="text-white text-xs font-bold">{s.label}</p>
-                      <p className="text-[#8B9BB4] text-[10px]">{s.desc}</p>
-                    </button>
-                  ))}
-                </div>
+          <div className="max-w-xl space-y-5">
+            {/* Summary length */}
+            <div className="flex gap-2">
+              {SUMMARY_LENGTHS.map(s => (
+                <button key={s.id} onClick={() => setSummaryLength(s.id)}
+                  className={`flex-1 rounded-xl p-3 text-center border transition-all ${summaryLength === s.id ? 'border-[#F4A261] bg-[#F4A261]/10' : 'border-white/10 bg-[#1A2A3D] hover:border-white/30'}`}>
+                  <div className="text-lg mb-1">{s.icon}</div>
+                  <p className="text-white text-xs font-bold">{s.label}</p>
+                  <p className="text-[#8B9BB4] text-[10px]">{s.desc}</p>
+                </button>
+              ))}
+            </div>
+
+            {!activeSummary && (
+              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 text-center">
+                <p className="text-yellow-400 text-sm mb-2">Generate a summary first.</p>
+                <button onClick={() => { setTab('Summary'); generateSummary.mutate(); }} className="text-xs text-[#F4A261] underline">Go to Summary →</button>
               </div>
+            )}
 
-              {!activeSummary && (
-                <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 text-center">
-                  <p className="text-yellow-400 text-sm mb-2">No summary yet — generate one first.</p>
-                  <button onClick={() => { setTab('Summary'); generateSummary.mutate(); }}
-                    className="text-xs text-[#F4A261] underline">Generate Summary →</button>
+            {activeSummary && !generateAudio.data && (
+              <div className="flex flex-col items-center justify-center min-h-[220px] bg-[#1A2A3D] rounded-2xl border border-white/10 gap-5">
+                <div className="text-5xl">🎧</div>
+                <div className="text-center">
+                  <p className="text-white font-semibold mb-1">Human AI Narration</p>
+                  <p className="text-[#8B9BB4] text-sm">Rachel · ElevenLabs · Natural human voice</p>
                 </div>
-              )}
+                <button onClick={() => generateAudio.mutate()} disabled={generateAudio.isPending}
+                  className="bg-[#F4A261] text-white font-bold px-10 py-3 rounded-xl hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center gap-2">
+                  {generateAudio.isPending
+                    ? <><span className="animate-spin inline-block">⏳</span> Generating…</>
+                    : <>🎙 Generate Audio</>}
+                </button>
+              </div>
+            )}
 
-              {activeSummary && generateAudio.data ? (
-                <AudioPlayer
-                  audioUrl={generateAudio.data.audioUrl}
-                  durationSec={generateAudio.data.durationSec}
-                  title={`${book?.title} — ${summaryLength.replace('_', ' ')} Summary`}
-                  voice={selectedVoice}
-                  voiceName={VOICES.find(v => v.id === selectedVoice)?.name}
-                  voiceStyle={VOICES.find(v => v.id === selectedVoice)?.style}
-                  onComplete={() => {}}
-                />
-              ) : activeSummary ? (
-                <div className="flex flex-col items-center justify-center min-h-[260px] bg-[#1A2A3D] rounded-2xl border border-white/10 gap-4">
-                  <div className="text-5xl">🎧</div>
-                  <div className="text-center">
-                    <p className="text-white font-semibold mb-1">Ready to generate audio</p>
-                    <p className="text-[#8B9BB4] text-sm">
-                      {VOICES.find(v => v.id === selectedVoice)?.name} • {VOICES.find(v => v.id === selectedVoice)?.style}
-                    </p>
-                  </div>
-                  <button onClick={() => generateAudio.mutate()} disabled={generateAudio.isPending}
-                    className="bg-[#F4A261] text-white font-bold px-8 py-3 rounded-xl hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center gap-2">
-                    {generateAudio.isPending
-                      ? <><span className="animate-spin">⏳</span> Generating with ElevenLabs...</>
-                      : <>🎙 Generate Audio</>}
-                  </button>
-                </div>
-              ) : null}
-            </div>
-
-            {/* Right: Voice selector */}
-            <div className="bg-[#1A2A3D] rounded-2xl border border-white/10 p-5">
-              <VoiceSelector value={selectedVoice} onChange={setSelectedVoice} />
-            </div>
+            {generateAudio.data && (
+              <AudioPlayer
+                audioUrl={generateAudio.data.audioUrl}
+                durationSec={generateAudio.data.durationSec}
+                title={`${book?.title} — ${summaryLength.replace('_', ' ')} Summary`}
+                onComplete={() => {}}
+              />
+            )}
           </div>
         )}
 
