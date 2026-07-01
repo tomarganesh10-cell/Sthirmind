@@ -39,6 +39,8 @@
   .hero .eyebrow{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--gold-l);font-weight:700}
   .hero h2{font-size:22px;margin:8px 0;line-height:1.3}
   .hero p{color:#D3E0F0;font-size:14px;line-height:1.6}
+  .freebar{background:rgba(157,78,221,.14);border:1px solid rgba(157,78,221,.3);border-radius:12px;padding:10px 14px;font-size:12.5px;line-height:1.5;color:#E6D5F5;margin-bottom:16px;text-align:center}
+  .freebar b{color:#C89BF0}
   .search{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:13px 16px;color:var(--txt);font-size:16px;margin-bottom:16px}
   .search::placeholder{color:var(--muted)}
   .pills{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:18px}
@@ -92,6 +94,11 @@
   .card p{font-size:14px;line-height:1.65;color:#D3E0F0}
   textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:13px;color:var(--txt);font-size:16px;font-family:inherit;resize:vertical;min-height:90px;margin-top:10px}
   .btn{background:var(--gold);color:#0D1B2A;border:none;border-radius:12px;padding:13px;font-weight:700;font-size:15px;cursor:pointer;width:100%;margin-top:12px}
+  .coach-intro{font-size:13.5px;line-height:1.6;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:16px}
+  .typing{display:inline-flex;gap:4px;align-items:center}
+  .typing i{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:blink 1.2s infinite}
+  .typing i:nth-child(2){animation-delay:.2s}.typing i:nth-child(3){animation-delay:.4s}
+  @keyframes blink{0%,60%,100%{opacity:.3}30%{opacity:1}}
   .empty{text-align:center;padding:50px 20px;color:var(--muted)}
   .empty .ic{font-size:52px;margin-bottom:14px}
   /* Bottom nav */
@@ -124,6 +131,7 @@
       <h2>Lead With Clarity.<br>Build With Equanimity.</h2>
       <p>Timeless wisdom, distilled. Heart · Hope · Health · Help → Happiness.</p>
     </div>
+    <div class="freebar">💛 Free forever for youngsters — a gift through <b>Hope Commoners Foundation</b></div>
     <input class="search" id="search" placeholder="🔍 Search books, authors, ideas…" oninput="renderBooks()" />
     <div class="pills" id="pills"></div>
     <div class="sec-title">📚 Wisdom Library</div>
@@ -155,13 +163,28 @@
     <div id="libContent"></div>
   </section>
 
+  <!-- COACH (AI) -->
+  <section class="view" id="v-coach">
+    <div class="sec-title" style="margin-top:4px">🤖 SthirMind AI Coach</div>
+    <div class="coach-intro">Your personal mentor — built on the 5H philosophy. Ask anything about life, leadership, stress, focus, purpose. Free, private, always here. 🧘</div>
+    <div class="chat" id="coachChat">
+      <div class="msg ai">Namaste 🙏 I'm your SthirMind Coach. Whatever you're facing — a tough decision, stress, motivation, or a big dream — let's talk. What's on your mind today?</div>
+    </div>
+    <div class="chatbar" style="position:fixed;bottom:calc(72px + env(safe-area-inset-bottom));left:0;right:0;max-width:640px;margin:0 auto;padding:10px 14px;background:rgba(13,27,42,.96);backdrop-filter:blur(14px);border-top:1px solid var(--border)">
+      <input id="coachIn" placeholder="Ask your coach anything…" onkeydown="if(event.key==='Enter')coachSend()" />
+      <button onclick="coachSend()">➤</button>
+    </div>
+    <div style="height:60px"></div>
+  </section>
+
   <!-- ME -->
   <section class="view" id="v-me">
     <div class="sec-title" style="margin-top:4px">👤 My Journey</div>
     <div class="card"><h4>🔥 Current Streak</h4><p id="meStreak" style="font-size:26px;color:var(--gold);font-weight:800"></p></div>
     <div class="card"><h4>📖 Progress</h4><p id="meStats"></p></div>
     <div class="card"><h4>🎯 5H Balance</h4><div id="meBalance"></div></div>
-    <div class="card"><h4>ℹ️ About</h4><p>SthirMind fuses 8 years of Vipassana practice with 22 years of P&L leadership. Built on the 5H philosophy by Jitendra Gupta · Hope Commoners Foundation.</p></div>
+    <div class="card"><h4>ℹ️ About</h4><p>SthirMind fuses 8 years of Vipassana practice with 22 years of P&L leadership. Built on the 5H philosophy by Jitendra Gupta.</p></div>
+    <div class="card" style="background:rgba(157,78,221,.12);border-color:rgba(157,78,221,.3)"><h4 style="color:#C89BF0">💛 A Gift from Hope Commoners</h4><p>SthirMind is offered <b>completely free, forever</b> to young people — a gift through the <b>Hope Commoners Foundation</b>. No fees, no ads. Just wisdom, shared with love. Pass it on. 🙏</p></div>
   </section>
 </div>
 
@@ -174,6 +197,7 @@
 
 <nav>
   <button class="active" data-v="wisdom" onclick="nav('wisdom')"><span class="ic">📚</span>Wisdom</button>
+  <button data-v="coach" onclick="nav('coach')"><span class="ic">🤖</span>Coach</button>
   <button data-v="daily" onclick="nav('daily')"><span class="ic">✨</span>Daily</button>
   <button data-v="library" onclick="nav('library')"><span class="ic">🗂</span>Library</button>
   <button data-v="me" onclick="nav('me')"><span class="ic">👤</span>Me</button>
@@ -358,20 +382,41 @@ function seek(s){audioT=Math.max(0,Math.min(750,audioT+s*(750/750)*1));document.
 function fmt(t){const m=Math.floor(t/60),s=t%60;return m+':'+(s<10?'0':'')+s;}
 
 // ─── CHAT ───────────────────────────────────────────────
-function sendChat(){
+const bookHistory={};
+async function sendChat(){
   const inp=document.getElementById('chatIn');const q=inp.value.trim();if(!q)return;
   const chat=document.getElementById('chat');const b=BOOKS.find(x=>x.id===currentBook);
-  chat.innerHTML+=`<div class="msg me">${q}</div>`;inp.value='';chat.scrollTop=chat.scrollHeight;
-  setTimeout(()=>{
-    const responses=[
-      `Great question. In <b>${b.title}</b>, ${b.author} would say: ${b.keys[Math.floor(Math.random()*b.keys.length)]} Try applying this to one real decision this week.`,
-      `Here's the essence: ${b.insight}`,
-      `Think of it this way — ${b.summary[1]||b.summary[0]} Start small, stay consistent.`,
-    ];
-    chat.innerHTML+=`<div class="msg ai">${responses[Math.floor(Math.random()*responses.length)]}</div>`;
-    chat.scrollTop=chat.scrollHeight;
-  },700);
+  chat.innerHTML+=`<div class="msg me">${esc(q)}</div>`;inp.value='';chat.scrollTop=chat.scrollHeight;haptic();
+  const h=bookHistory[currentBook]=bookHistory[currentBook]||[];
+  h.push({role:'user',content:q});
+  const t=addTyping(chat);
+  const reply=await askAI(h,b.title);
+  t.remove();
+  h.push({role:'assistant',content:reply});
+  chat.innerHTML+=`<div class="msg ai">${fmtReply(reply)}</div>`;chat.scrollTop=chat.scrollHeight;
 }
+// ─── AI COACH (global) ──────────────────────────────────
+const coachHist=[];
+async function coachSend(){
+  const inp=document.getElementById('coachIn');const q=inp.value.trim();if(!q)return;
+  const chat=document.getElementById('coachChat');
+  chat.innerHTML+=`<div class="msg me">${esc(q)}</div>`;inp.value='';chat.scrollTop=chat.scrollHeight;haptic();
+  coachHist.push({role:'user',content:q});
+  const t=addTyping(chat);
+  const reply=await askAI(coachHist,'');
+  t.remove();
+  coachHist.push({role:'assistant',content:reply});
+  chat.innerHTML+=`<div class="msg ai">${fmtReply(reply)}</div>`;chat.scrollTop=chat.scrollHeight;
+}
+function addTyping(chat){const d=document.createElement('div');d.className='msg ai';d.innerHTML='<span class="typing"><i></i><i></i><i></i></span>';chat.appendChild(d);chat.scrollTop=chat.scrollHeight;return d;}
+async function askAI(messages,book){
+  try{
+    const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages,book})});
+    const d=await r.json();return d.reply||'I am here with you.';
+  }catch(e){return 'I could not reach the coach just now. Please try again in a moment. 🙏';}
+}
+function esc(s){return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+function fmtReply(s){return esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\n/g,'<br>');}
 
 // ─── DAILY ──────────────────────────────────────────────
 function renderDaily(){
@@ -431,6 +476,7 @@ function nav(v){
   document.getElementById('v-'+v).classList.add('active');
   document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.v===v));
   if(v==='daily')renderDaily();if(v==='library')renderLibrary();if(v==='me')renderMe();if(v==='wisdom')renderBooks();
+  if(v==='coach')setTimeout(()=>{const i=document.getElementById('coachIn');if(i)i.focus();},100);
   window.scrollTo(0,0);haptic();
 }
 
