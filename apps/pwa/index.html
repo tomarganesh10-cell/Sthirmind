@@ -234,10 +234,10 @@
     <div class="tabpane active" id="g-checkin">
       <div class="card"><h4>🌤 How are you feeling?</h4><div class="moods" id="ciMoods" style="margin-top:8px"></div></div>
       <div class="card"><h4>Rate your 4 pillars today</h4>
-        <div class="slider"><label><span>❤️ Heart — relationships</span><span id="v-heart" style="color:var(--heart)">65</span></label><input type="range" min="0" max="100" value="65" oninput="setP('heart',this.value)"></div>
-        <div class="slider"><label><span>🌟 Hope — goals & purpose</span><span id="v-hope" style="color:var(--hope)">70</span></label><input type="range" min="0" max="100" value="70" oninput="setP('hope',this.value)"></div>
-        <div class="slider"><label><span>💪 Health — body & mind</span><span id="v-health" style="color:var(--health)">60</span></label><input type="range" min="0" max="100" value="60" oninput="setP('health',this.value)"></div>
-        <div class="slider"><label><span>🤝 Help — contribution</span><span id="v-help" style="color:var(--help)">75</span></label><input type="range" min="0" max="100" value="75" oninput="setP('help',this.value)"></div>
+        <div class="slider"><label><span>❤️ Heart — relationships</span><span id="v-heart" style="color:var(--heart)">0</span></label><input id="s-heart" type="range" min="0" max="100" value="0" oninput="setP('heart',this.value)"></div>
+        <div class="slider"><label><span>🌟 Hope — goals & purpose</span><span id="v-hope" style="color:var(--hope)">0</span></label><input id="s-hope" type="range" min="0" max="100" value="0" oninput="setP('hope',this.value)"></div>
+        <div class="slider"><label><span>💪 Health — body & mind</span><span id="v-health" style="color:var(--health)">0</span></label><input id="s-health" type="range" min="0" max="100" value="0" oninput="setP('health',this.value)"></div>
+        <div class="slider"><label><span>🤝 Help — contribution</span><span id="v-help" style="color:var(--help)">0</span></label><input id="s-help" type="range" min="0" max="100" value="0" oninput="setP('help',this.value)"></div>
       </div>
       <div class="card"><h4>🙏 3 things you're grateful for</h4>
         <textarea id="grat" placeholder="Today I'm grateful for…" style="min-height:70px"></textarea></div>
@@ -333,7 +333,7 @@ const DB={
   set(o){const d={...this.k,...o};localStorage.setItem('sthir',JSON.stringify(d));syncUp();},
   get name(){return this.k.name||''},get moods(){return this.k.moods||[]},get streak(){return this.k.streak||0},
   get lastDay(){return this.k.lastDay||''},get bookmarks(){return this.k.bookmarks||[]},get progress(){return this.k.progress||{}},
-  get pillar(){return this.k.pillar||{heart:65,hope:70,health:60,help:75}},get happiness(){return this.k.happiness||0},
+  get pillar(){return this.k.pillar||{heart:0,hope:0,health:0,help:0}},get happiness(){return this.k.happiness||0},
   get habits(){return this.k.habits||{}},get goals(){return this.k.goals||[]},get journal(){return this.k.journal||[]},
   get focus(){return this.k.focus||{}},
 };
@@ -426,7 +426,7 @@ async function askAI(messages,book,agent){try{const r=await fetch('/api/chat',{m
 
 // ═══ GROW: check-in ═══
 function growTab(el,id){el.parentElement.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');document.querySelectorAll('#v-grow .tabpane').forEach(p=>p.classList.remove('active'));document.getElementById('g-'+id).classList.add('active');if(id==='goals')renderGoals();if(id==='journal')renderJournal();if(id==='focus')renderFocus();if(id==='checkin')renderCheckin();haptic();}
-function renderCheckin(){const tm=DB.moods.find(m=>m.day===today());document.getElementById('ciMoods').innerHTML=MOODS.map((m,i)=>`<div class="mood ${tm&&tm.mood===i?'sel':''}" onclick="ciMood(${i})"><div>${m.e}</div><span>${m.l}</span></div>`).join('');const p=DB.pillar;['heart','hope','health','help'].forEach(k=>{document.getElementById('v-'+k).textContent=p[k];});}
+function renderCheckin(){const tm=DB.moods.find(m=>m.day===today());document.getElementById('ciMoods').innerHTML=MOODS.map((m,i)=>`<div class="mood ${tm&&tm.mood===i?'sel':''}" onclick="ciMood(${i})"><div>${m.e}</div><span>${m.l}</span></div>`).join('');const p=DB.pillar;['heart','hope','health','help'].forEach(k=>{document.getElementById('v-'+k).textContent=p[k];const s=document.getElementById('s-'+k);if(s)s.value=p[k];});}
 function ciMood(i){let m=DB.moods.filter(x=>x.day!==today());m.push({day:today(),mood:i,ts:Date.now()});DB.set({moods:m});renderCheckin();haptic();}
 function setP(k,v){document.getElementById('v-'+k).textContent=v;const p={...DB.pillar};p[k]=+v;DB.set({pillar:p});}
 function submitCheckin(){const p=DB.pillar;const h=Math.round(.28*p.heart+.25*p.hope+.27*p.health+.20*p.help);let c=(DB.k.checkins||[]).filter(x=>x.day!==today());c.push({day:today(),h,grat:document.getElementById('grat').value});DB.set({happiness:h,checkins:c});bumpStreak();toast('Check-in complete! Happiness: '+h+' 🎉');nav('home');}
