@@ -41,6 +41,9 @@ services:
   # ── API (NestJS) ─────────────────────────────────────────
   api:
     image: ${DOCKER_REGISTRY:-ghcr.io/tomarganesh10-cell}/sthirmind-api:${IMAGE_TAG:-latest}
+    build:
+      context: ..
+      dockerfile: apps/api/Dockerfile
     container_name: sthirmind-api
     restart: always
     depends_on:
@@ -76,6 +79,12 @@ services:
   # ── Web (Next.js) ────────────────────────────────────────
   web:
     image: ${DOCKER_REGISTRY:-ghcr.io/tomarganesh10-cell}/sthirmind-web:${IMAGE_TAG:-latest}
+    build:
+      context: ..
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: https://sthirmind.hopecommonersfoundation.com/api/v1
+        NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${CLERK_PUBLISHABLE_KEY}
     container_name: sthirmind-web
     restart: always
     depends_on:
