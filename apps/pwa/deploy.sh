@@ -33,10 +33,16 @@ sleep 2
 
 # ── AI Coach backend ──────────────────────────────────────────
 echo "[2/5] Starting AI Coach backend..."
+mkdir -p /opt/sthirmind-data
+[ -f /opt/sthirmind-data/.secret ] || openssl rand -hex 24 > /opt/sthirmind-data/.secret 2>/dev/null || echo "sthir-secret-fallback" > /opt/sthirmind-data/.secret
+APP_SECRET=$(cat /opt/sthirmind-data/.secret)
 docker run -d --name sthir-ai --restart always \
   -e ANTHROPIC_API_KEY="$AI_KEY" \
   -e CLAUDE_MODEL="claude-sonnet-5" \
+  -e APP_SECRET="$APP_SECRET" \
+  -e DB_FILE="/data/db.json" \
   -v $WEB_ROOT/server.mjs:/app/server.mjs:ro \
+  -v /opt/sthirmind-data:/data \
   -w /app \
   node:20-alpine node server.mjs
 if [ -n "$AI_KEY" ]; then echo "  ✅ AI Coach LIVE (key loaded)"; else echo "  ⚠️  AI key not set — coach replies with a placeholder. Add ANTHROPIC_API_KEY to .env"; fi
