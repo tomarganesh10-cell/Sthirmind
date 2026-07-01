@@ -1,5 +1,5 @@
 // SthirMind PWA Service Worker
-const CACHE = 'sthirmind-v2';
+const CACHE = 'sthirmind-v3';
 const ASSETS = [
   '/',
   '/index.html',

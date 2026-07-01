@@ -113,6 +113,20 @@
   .install b{font-size:14px}.install small{font-size:12px;opacity:.8}
   .install button{margin-left:auto;background:#0D1B2A;color:var(--gold);border:none;padding:9px 15px;border-radius:9px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap}
   .install .x{background:none;color:#0D1B2A;padding:4px 8px;font-size:18px}
+  /* Onboarding */
+  .onb{position:fixed;inset:0;background:rgba(9,18,30,.96);backdrop-filter:blur(10px);z-index:100;display:none;align-items:center;justify-content:center;padding:24px}
+  .onb.show{display:flex}
+  .onb-card{background:var(--surface);border:1px solid var(--border);border-radius:22px;padding:28px 24px;max-width:400px;width:100%;text-align:center;animation:pop .4s ease}
+  @keyframes pop{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:none}}
+  .onb-card .big{font-size:52px;margin-bottom:6px}
+  .onb-card h2{font-size:24px;margin-bottom:8px}
+  .onb-card p{color:var(--muted);font-size:14px;line-height:1.6;margin-bottom:18px}
+  .onb-card input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:13px;padding:14px 16px;color:var(--txt);font-size:17px;text-align:center;margin-bottom:14px}
+  .moods{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+  .mood{width:60px;height:68px;border-radius:15px;background:var(--bg);border:1px solid var(--border);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:26px;transition:.2s}
+  .mood span{font-size:10px;color:var(--muted)}
+  .mood.sel{border-color:var(--gold);background:rgba(244,162,97,.15);transform:scale(1.06)}
+  .mood.sel span{color:var(--gold)}
   .toast{position:fixed;bottom:calc(90px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:var(--surface2);color:var(--txt);padding:11px 20px;border-radius:22px;font-size:13px;font-weight:600;z-index:70;opacity:0;transition:.3s;border:1px solid var(--border);pointer-events:none;white-space:nowrap}
   .toast.show{opacity:1}
 </style>
@@ -179,13 +193,19 @@
 
   <!-- ME -->
   <section class="view" id="v-me">
-    <div class="sec-title" style="margin-top:4px">👤 My Journey</div>
+    <div class="sec-title" style="margin-top:4px" id="meHi">👤 My Journey</div>
+    <div class="card"><h4>🌤 How are you feeling today?</h4><div class="moods" id="meMoodPick" style="justify-content:flex-start;margin-top:10px"></div></div>
+    <div class="card"><h4>📈 Mood · Last 7 Days</h4><div id="meMoodHist"></div></div>
     <div class="card"><h4>🔥 Current Streak</h4><p id="meStreak" style="font-size:26px;color:var(--gold);font-weight:800"></p></div>
-    <div class="card"><h4>📖 Progress</h4><p id="meStats"></p></div>
+    <div class="card"><h4>📖 Activity</h4><p id="meStats"></p></div>
     <div class="card"><h4>🎯 5H Balance</h4><div id="meBalance"></div></div>
     <div class="card"><h4>ℹ️ About</h4><p>SthirMind fuses 8 years of Vipassana practice with 22 years of P&L leadership. Built on the 5H philosophy by Jitendra Gupta.</p></div>
     <div class="card" style="background:rgba(157,78,221,.12);border-color:rgba(157,78,221,.3)"><h4 style="color:#C89BF0">💛 A Gift from Hope Commoners</h4><p>SthirMind is offered <b>completely free, forever</b> to young people — a gift through the <b>Hope Commoners Foundation</b>. No fees, no ads. Just wisdom, shared with love. Pass it on. 🙏</p></div>
   </section>
+</div>
+
+<div class="onb" id="onb">
+  <div class="onb-card" id="onbCard"></div>
 </div>
 
 <div class="install" id="install">
@@ -362,24 +382,53 @@ function tab(el,id){
 
 function markRead(id){DB.set({progress:{...DB.progress,[id]:100}});toast('Marked as read ✓');bumpStreak();openBook(id,true);}
 
-// ─── AUDIO SIM ──────────────────────────────────────────
+// ─── AUDIO (real voice via SpeechSynthesis) ─────────────
 let playing=false,audioT=0,audioTimer=null,waveBars=[];
+let chunks=[],chunkIdx=0,utter=null;
 function buildWave(){
   const w=document.getElementById('wave');if(!w)return;
   w.innerHTML='';waveBars=[];
   for(let i=0;i<40;i++){const b=document.createElement('i');b.style.height='8px';w.appendChild(b);waveBars.push(b);}
+  const b=BOOKS.find(x=>x.id===currentBook);
+  const text=[b.title+' by '+b.author+'.',...b.summary,'Key takeaways.',...b.keys,'Reflection. '+b.insight].join(' ');
+  chunks=text.match(/[^.!?]+[.!?]+/g)||[text];chunkIdx=0;audioT=0;
+  document.getElementById('dur').textContent=fmt(Math.round(text.split(' ').length/2.6));
+}
+function pickVoice(){
+  const vs=speechSynthesis.getVoices();
+  return vs.find(v=>/en-IN/i.test(v.lang)&&/female|woman|heera|neerja/i.test(v.name))
+      || vs.find(v=>/en-GB/i.test(v.lang))
+      || vs.find(v=>/en-US/i.test(v.lang)&&/female|samantha|zira|aria/i.test(v.name))
+      || vs.find(v=>/^en/i.test(v.lang)) || vs[0];
+}
+function speakNext(){
+  if(chunkIdx>=chunks.length){stopAudio();return;}
+  utter=new SpeechSynthesisUtterance(chunks[chunkIdx].trim());
+  const v=pickVoice();if(v)utter.voice=v;
+  utter.rate=0.95;utter.pitch=1.02;
+  utter.onend=()=>{chunkIdx++;if(playing)speakNext();};
+  speechSynthesis.speak(utter);
 }
 function togglePlay(){
+  if(!('speechSynthesis' in window)){toast('Audio not supported on this browser');return;}
   playing=!playing;haptic();
   document.getElementById('playBtn').textContent=playing?'❚❚':'▶';
-  if(playing){audioTimer=setInterval(()=>{
-    audioT++;if(audioT>=750){audioT=0;playing=false;document.getElementById('playBtn').textContent='▶';clearInterval(audioTimer);}
-    document.getElementById('cur').textContent=fmt(audioT);
-    waveBars.forEach((b,i)=>b.style.height=(8+Math.abs(Math.sin(Date.now()/180+i/2))*40)+'px');
-  },100);}else clearInterval(audioTimer);
+  if(playing){
+    speechSynthesis.cancel();speakNext();
+    audioTimer=setInterval(()=>{
+      audioT++;document.getElementById('cur').textContent=fmt(audioT);
+      waveBars.forEach((b,i)=>b.style.height=(8+Math.abs(Math.sin(Date.now()/180+i/2))*40)+'px');
+    },1000);
+  }else{speechSynthesis.cancel();clearInterval(audioTimer);
+    waveBars.forEach(b=>b.style.height='8px');}
 }
-function seek(s){audioT=Math.max(0,Math.min(750,audioT+s*(750/750)*1));document.getElementById('cur').textContent=fmt(audioT);haptic();}
-function fmt(t){const m=Math.floor(t/60),s=t%60;return m+':'+(s<10?'0':'')+s;}
+function stopAudio(){playing=false;const pb=document.getElementById('playBtn');if(pb)pb.textContent='▶';clearInterval(audioTimer);waveBars.forEach(b=>b.style.height='8px');}
+function seek(s){
+  if(s>0)chunkIdx=Math.min(chunks.length-1,chunkIdx+1);else chunkIdx=Math.max(0,chunkIdx-1);
+  audioT=Math.max(0,audioT+s);document.getElementById('cur').textContent=fmt(audioT);haptic();
+  if(playing){speechSynthesis.cancel();speakNext();}
+}
+function fmt(t){t=Math.max(0,Math.round(t));const m=Math.floor(t/60),s=t%60;return m+':'+(s<10?'0':'')+s;}
 
 // ─── CHAT ───────────────────────────────────────────────
 const bookHistory={};
@@ -459,9 +508,18 @@ function bookCard(b){const pr=DB.progress[b.id]||0;return `<div class="book" onc
 
 // ─── ME ─────────────────────────────────────────────────
 function renderMe(){
+  if(DB.k.name)document.getElementById('meHi').textContent='👤 '+DB.k.name+"'s Journey";
+  const todayMood=(DB.k.moods||[]).find(m=>m.day===today());
+  document.getElementById('meMoodPick').innerHTML=MOODS.map((m,i)=>
+    `<div class="mood ${todayMood&&todayMood.mood===i?'sel':''}" onclick="moodCheckin(${i})"><div>${m.e}</div><span>${m.l}</span></div>`).join('');
+  const days=[];for(let i=6;i>=0;i--){const d=new Date(Date.now()-i*86400000).toISOString().slice(0,10);const m=(DB.k.moods||[]).find(x=>x.day===d);days.push({d,m});}
+  document.getElementById('meMoodHist').innerHTML='<div style="display:flex;justify-content:space-between;gap:4px">'+days.map(x=>{
+    const lbl=new Date(x.d).toLocaleDateString('en',{weekday:'short'})[0];
+    return `<div style="flex:1;text-align:center"><div style="font-size:22px">${x.m?MOODS[x.m.mood].e:'·'}</div><div style="font-size:10px;color:var(--muted);margin-top:3px">${lbl}</div></div>`;
+  }).join('')+'</div>';
   document.getElementById('meStreak').textContent='🔥 '+DB.streak+' day'+(DB.streak===1?'':'s');
   const read=Object.values(DB.progress).filter(p=>p>=100).length;
-  document.getElementById('meStats').textContent=`${DB.bookmarks.length} saved · ${read} completed · ${DB.reflections.length} reflections`;
+  document.getElementById('meStats').textContent=`${DB.bookmarks.length} saved · ${read} completed · ${DB.reflections.length} reflections · ${(DB.k.moods||[]).length} check-ins`;
   const bal=Object.keys(PILLARS).map(p=>{
     const n=BOOKS.filter(b=>b.pillar===p&&(DB.progress[b.id]||0)>0).length;
     const tot=BOOKS.filter(b=>b.pillar===p).length;
@@ -472,10 +530,11 @@ function renderMe(){
 
 // ─── NAV ────────────────────────────────────────────────
 function nav(v){
+  if('speechSynthesis' in window)speechSynthesis.cancel();stopAudio();
   document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
   document.getElementById('v-'+v).classList.add('active');
   document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.v===v));
-  if(v==='daily')renderDaily();if(v==='library')renderLibrary();if(v==='me')renderMe();if(v==='wisdom')renderBooks();
+  if(v==='daily')renderDaily();if(v==='library')renderLibrary();if(v==='me')renderMe();if(v==='wisdom'){renderBooks();greet();}
   if(v==='coach')setTimeout(()=>{const i=document.getElementById('coachIn');if(i)i.focus();},100);
   window.scrollTo(0,0);haptic();
 }
@@ -490,8 +549,47 @@ const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
 const isStandalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone;
 if(isIOS&&!isStandalone){setTimeout(()=>{const el=document.getElementById('install');el.querySelector('div').innerHTML='<b>Install SthirMind</b><br><small>Tap Share ⬆ then "Add to Home Screen"</small>';el.querySelector('button').style.display='none';el.classList.add('show');},3000);}
 
+// ─── ONBOARDING + MOOD ──────────────────────────────────
+const MOODS=[{e:'😄',l:'Great'},{e:'🙂',l:'Good'},{e:'😐',l:'Okay'},{e:'😔',l:'Low'},{e:'😣',l:'Stressed'}];
+let onbMood=null;
+function startOnboarding(){
+  if(DB.k.name){greet();return;}
+  const c=document.getElementById('onbCard');
+  c.innerHTML=`<div class="big">🧘</div><h2>Welcome to SthirMind</h2>
+    <p>A calm companion for your mind — timeless wisdom & a personal AI coach. Free, forever, through Hope Commoners Foundation. 💛<br><br>What should I call you?</p>
+    <input id="onbName" placeholder="Your name" maxlength="24" />
+    <button class="btn" onclick="onbStep2()">Continue →</button>`;
+  document.getElementById('onb').classList.add('show');
+  setTimeout(()=>document.getElementById('onbName').focus(),300);
+}
+function onbStep2(){
+  const n=(document.getElementById('onbName').value||'').trim()||'friend';
+  DB.set({name:n});
+  const c=document.getElementById('onbCard');
+  c.innerHTML=`<div class="big">💛</div><h2>Namaste, ${esc(n)}!</h2>
+    <p>Before we begin — how are you feeling right now? There's no wrong answer. 🙏</p>
+    <div class="moods">${MOODS.map((m,i)=>`<div class="mood" data-i="${i}" onclick="pickMood(${i})"><div>${m.e}</div><span>${m.l}</span></div>`).join('')}</div>
+    <button class="btn" onclick="finishOnb()">Enter SthirMind →</button>`;
+}
+function pickMood(i){onbMood=i;document.querySelectorAll('#onbCard .mood').forEach(m=>m.classList.toggle('sel',+m.dataset.i===i));haptic();}
+function finishOnb(){
+  if(onbMood!=null)logMood(onbMood);
+  document.getElementById('onb').classList.remove('show');
+  greet();toast('Welcome, '+DB.k.name+'! 🙏');
+}
+function greet(){
+  const h=new Date().getHours();const g=h<12?'Good morning':h<17?'Good afternoon':'Good evening';
+  const el=document.querySelector('.hero .eyebrow');
+  if(el&&DB.k.name)el.textContent=g+', '+DB.k.name+' 🙏';
+}
+function logMood(i){
+  let m=DB.k.moods||[];m=m.filter(x=>x.day!==today());
+  m.push({day:today(),mood:i,ts:Date.now()});DB.set({moods:m});
+}
+function moodCheckin(i){logMood(i);bumpStreak();renderMe();toast('Mood logged '+MOODS[i].e);haptic();}
+
 // ─── INIT ───────────────────────────────────────────────
-renderPills();renderBooks();refreshStreak();
+renderPills();renderBooks();refreshStreak();startOnboarding();
 if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
 const params=new URLSearchParams(location.search);if(params.get('tab'))nav(params.get('tab'));
 </script>
