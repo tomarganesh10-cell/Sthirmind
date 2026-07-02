@@ -6,6 +6,8 @@ import crypto from 'node:crypto';
 
 const API_KEY = process.env.ANTHROPIC_API_KEY || '';
 const MODEL = process.env.CLAUDE_MODEL || 'claude-sonnet-5';
+const GEMINI_KEY = process.env.GEMINI_API_KEY || '';
+const GROQ_KEY = process.env.GROQ_API_KEY || '';
 const PORT = process.env.PORT || 8080;
 const SECRET = process.env.APP_SECRET || 'sthirmind-hope-secret-change-me';
 const DB_FILE = process.env.DB_FILE || '/data/db.json';
@@ -85,19 +87,60 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { ok: true });
     }
 
-    // ── AI Chat ──
+    // ── AI Chat (Anthropic → Gemini → Groq, whichever key exists) ──
     if (url === '/api/chat' && req.method === 'POST') {
       const { messages = [], book = '', agent = 'life' } = await body(req);
-      if (!API_KEY) return send(res, 200, { reply: 'The AI Coach is warming up. (Server API key not set yet.)' });
       const persona = AGENT_PERSONAS[agent] || AGENT_PERSONAS.life;
-      const ctx = (book ? `The user is reading "${book}". Relate guidance to it.\n` : '') + persona;
-      const r = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json', 'x-api-key': API_KEY, 'anthropic-version': '2023-06-01' },
-        body: JSON.stringify({ model: MODEL, max_tokens: 700, system: SYSTEM + '\n\n' + ctx, messages: messages.slice(-10) }),
-      });
-      const data = await r.json();
-      return send(res, 200, { reply: data?.content?.[0]?.text || 'I am here with you. Could you say that again?' });
+      const sys = SYSTEM + '\n\n' + (book ? `The user is reading "${book}". Relate guidance to it.\n` : '') + persona;
+      const hist = messages.slice(-10);
+      let reply = '';
+
+      if (API_KEY) {
+        try {
+          const r = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json', 'x-api-key': API_KEY, 'anthropic-version': '2023-06-01' },
+            body: JSON.stringify({ model: MODEL, max_tokens: 700, system: sys, messages: hist }),
+          });
+          const data = await r.json();
+          reply = data?.content?.[0]?.text || '';
+        } catch {}
+      }
+
+      if (!reply && GEMINI_KEY) {
+        try {
+          const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + GEMINI_KEY, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              system_instruction: { parts: [{ text: sys }] },
+              contents: hist.map((m) => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] })),
+              generationConfig: { maxOutputTokens: 700 },
+            }),
+          });
+          const data = await r.json();
+          reply = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        } catch {}
+      }
+
+      if (!reply && GROQ_KEY) {
+        try {
+          const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json', authorization: 'Bearer ' + GROQ_KEY },
+            body: JSON.stringify({
+              model: 'llama-3.3-70b-versatile',
+              max_tokens: 700,
+              messages: [{ role: 'system', content: sys }, ...hist],
+            }),
+          });
+          const data = await r.json();
+          reply = data?.choices?.[0]?.message?.content || '';
+        } catch {}
+      }
+
+      if (!reply) return send(res, 200, { reply: 'The AI Coach is warming up. (Server API key not set yet.)' });
+      return send(res, 200, { reply });
     }
 
     send(res, 404, { error: 'not found' });
