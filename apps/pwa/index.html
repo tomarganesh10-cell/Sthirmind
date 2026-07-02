@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<title>SthirMind — Your Mind's Operating System</title>
+<meta name="description" content="Free for youngsters through Hope Commoners Foundation. Wisdom, AI coach, habits, focus & mood — all in one." />
+<link rel="manifest" href="/manifest.json" />
+<meta name="theme-color" content="#1B3A6B" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="SthirMind" />
+<link rel="apple-touch-icon" href="/icons/icon-192.png" />
+<link rel="icon" href="/icons/icon-192.png" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  :root{--bg:#0D1B2A;--surface:#152A3F;--surface2:#1B3A5C;--border:rgba(255,255,255,.09);
+    --gold:#F4A261;--gold-l:#FDDDB7;--txt:#EAF0F6;--muted:#8B9BB4;
+    --heart:#E63946;--hope:#457B9D;--health:#52B788;--help:#9D4EDD;--happy:#F4A261;}
+  html,body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;overscroll-behavior-y:none}
+  body{padding-bottom:calc(74px + env(safe-area-inset-bottom))}
+  ::-webkit-scrollbar{width:0;height:0}
+  h1,h2,h3{font-family:Georgia,serif}
+  .app{max-width:640px;margin:0 auto;min-height:100vh}
+  header{position:sticky;top:0;z-index:40;background:rgba(13,27,42,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);padding:calc(env(safe-area-inset-top) + 13px) 18px 13px;display:flex;align-items:center;justify-content:space-between}
+  .logo{font-weight:800;font-size:19px;color:var(--gold)}.logo span{color:var(--txt)}
+  .streak{font-size:12px;background:var(--surface);padding:6px 11px;border-radius:20px;color:var(--gold);font-weight:700;border:1px solid var(--border)}
+  .view{padding:18px;display:none;animation:fade .35s ease}.view.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .hero{background:linear-gradient(135deg,#1B3A6B,#2C5F9E);border-radius:20px;padding:20px;margin-bottom:16px;position:relative;overflow:hidden}
+  .hero::after{content:'🧘';position:absolute;right:-8px;bottom:-14px;font-size:80px;opacity:.13}
+  .hero .eyebrow{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--gold-l);font-weight:700}
+  .hero h2{font-size:20px;margin:6px 0;line-height:1.3}.hero p{color:#D3E0F0;font-size:13px;line-height:1.5}
+  .freebar{background:rgba(157,78,221,.14);border:1px solid rgba(157,78,221,.3);border-radius:12px;padding:9px 13px;font-size:12px;line-height:1.5;color:#E6D5F5;margin-bottom:16px;text-align:center}
+  .freebar b{color:#C89BF0}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px}
+  .card h4{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--gold);margin-bottom:10px}
+  .card p{font-size:14px;line-height:1.6;color:#D3E0F0}
+  .sec-title{font-size:13px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);font-weight:700;margin:20px 0 12px}
+  .search{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 16px;color:var(--txt);font-size:16px;margin-bottom:14px}
+  .search::placeholder{color:var(--muted)}
+  .pills{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:16px}
+  .pill{white-space:nowrap;padding:8px 15px;border-radius:20px;background:var(--surface);border:1px solid var(--border);color:var(--muted);font-size:13px;font-weight:600;cursor:pointer}
+  .pill.active{background:var(--gold);color:#0D1B2A;border-color:var(--gold)}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  /* Happiness ring */
+  .ringwrap{display:flex;align-items:center;gap:18px}
+  .ring{position:relative;width:120px;height:120px;flex-shrink:0}
+  .ring .val{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .ring .num{font-size:32px;font-weight:800;color:var(--gold)}
+  .ring .tier{font-size:10px;color:var(--muted)}
+  /* pillars */
+  .pcard{border-radius:14px;padding:13px;border:1px solid var(--border);background:var(--surface);position:relative;overflow:hidden}
+  .pcard::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+  .pcard.heart::before{background:var(--heart)}.pcard.hope::before{background:var(--hope)}
+  .pcard.health::before{background:var(--health)}.pcard.help::before{background:var(--help)}
+  .pcard .emoji{font-size:18px}.pcard .lbl{font-size:10px;text-transform:uppercase;color:var(--muted);letter-spacing:1px;margin-top:3px}
+  .pcard .val{font-size:22px;font-weight:800;margin:2px 0}
+  .pcard.heart .val{color:var(--heart)}.pcard.hope .val{color:var(--hope)}.pcard.health .val{color:var(--health)}.pcard.help .val{color:var(--help)}
+  .barbg{height:5px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden;margin-top:8px}
+  .bar{height:100%;border-radius:3px;transition:width 1s cubic-bezier(.4,0,.2,1)}
+  .pcard.heart .bar{background:var(--heart)}.pcard.hope .bar{background:var(--hope)}.pcard.health .bar{background:var(--health)}.pcard.help .bar{background:var(--help)}
+  /* habits */
+  .habits{display:flex;gap:9px;flex-wrap:wrap}
+  .habit{padding:9px 13px;border-radius:11px;border:1px solid var(--border);background:var(--bg);font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;user-select:none}
+  .habit.done{background:rgba(82,183,136,.15);border-color:var(--health)}
+  .habit small{color:var(--muted);font-size:11px}
+  /* insights */
+  .insight{padding:13px;border-radius:12px;border-left:3px solid;margin-bottom:9px;background:var(--bg)}
+  .insight.health{border-color:var(--health)}.insight.hope{border-color:var(--hope)}.insight.heart{border-color:var(--heart)}.insight.help{border-color:var(--help)}
+  .insight .t{font-size:11px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;font-weight:700}
+  .insight.health .t{color:var(--health)}.insight.hope .t{color:var(--hope)}.insight.heart .t{color:var(--heart)}.insight.help .t{color:var(--help)}
+  .insight p{font-size:13px;color:var(--muted);line-height:1.5}
+  /* book */
+  .book{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:14px;cursor:pointer;position:relative}
+  .book:active{transform:scale(.97)}
+  .book .cover{width:100%;aspect-ratio:3/4;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:38px;margin-bottom:10px}
+  .book h3{font-size:14px;line-height:1.3;margin-bottom:3px;font-family:-apple-system,sans-serif;font-weight:700}
+  .book .author{font-size:12px;color:var(--muted)}
+  .book .pillar{position:absolute;top:9px;right:9px;font-size:9px;padding:3px 7px;border-radius:9px;font-weight:700;color:#fff}
+  .bm{position:absolute;top:9px;left:9px;font-size:15px;cursor:pointer;z-index:2}
+  .progress{height:4px;background:rgba(255,255,255,.12);border-radius:3px;margin-top:8px;overflow:hidden}.progress i{display:block;height:100%;background:var(--gold);border-radius:3px}
+  .back{background:none;border:none;color:var(--gold);font-size:15px;font-weight:600;margin-bottom:12px;cursor:pointer}
+  .detail-cover{width:88px;aspect-ratio:3/4;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:40px;flex-shrink:0}
+  .tabs{display:flex;gap:6px;background:var(--surface);border-radius:12px;padding:5px;margin:16px 0}
+  .tab{flex:1;text-align:center;padding:9px;border-radius:9px;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer}
+  .tab.active{background:var(--gold);color:#0D1B2A}
+  .tabpane{display:none}.tabpane.active{display:block;animation:fade .3s}
+  .summary-para{font-size:14px;line-height:1.7;color:#D3E0F0;margin-bottom:12px}
+  .keypt{background:var(--bg);border-left:3px solid var(--gold);border-radius:0 11px 11px 0;padding:12px 14px;margin-bottom:10px;font-size:13px;line-height:1.55}
+  /* audio */
+  .player{background:linear-gradient(135deg,#152A3F,#1B3A5C);border:1px solid var(--border);border-radius:18px;padding:20px;text-align:center}
+  .wave{display:flex;align-items:center;justify-content:center;gap:3px;height:52px;margin:16px 0}
+  .wave i{width:3px;background:var(--gold);border-radius:3px;transition:height .1s}
+  .pbtn{width:60px;height:60px;border-radius:50%;background:var(--gold);border:none;color:#0D1B2A;font-size:24px;cursor:pointer;margin:6px;box-shadow:0 6px 22px rgba(244,162,97,.4)}
+  .pctrl{display:flex;align-items:center;justify-content:center;gap:14px}
+  .sbtn{background:var(--surface);border:1px solid var(--border);color:var(--txt);width:42px;height:42px;border-radius:50%;font-size:12px;cursor:pointer}
+  .ptime{font-size:12px;color:var(--muted);margin-top:10px}.voice-tag{font-size:11px;color:var(--gold);margin-top:5px}
+  /* chat */
+  .chat{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
+  .msg{max-width:84%;padding:11px 14px;border-radius:15px;font-size:14px;line-height:1.55}
+  .msg.ai{background:var(--surface);border:1px solid var(--border);align-self:flex-start;border-bottom-left-radius:4px}
+  .msg.me{background:var(--gold);color:#0D1B2A;align-self:flex-end;border-bottom-right-radius:4px;font-weight:500}
+  .chatbar{display:flex;gap:8px}
+  .chatbar input{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:22px;padding:12px 16px;color:var(--txt);font-size:16px}
+  .chatbar button{background:var(--gold);border:none;color:#0D1B2A;width:46px;border-radius:50%;font-size:18px;cursor:pointer}
+  .agents{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;margin-bottom:12px}
+  .agent{white-space:nowrap;padding:9px 13px;border-radius:12px;background:var(--surface);border:1px solid var(--border);color:var(--muted);font-size:13px;font-weight:600;cursor:pointer}
+  .agent.active{border-color:var(--gold);color:var(--txt);background:var(--surface2)}
+  .typing{display:inline-flex;gap:4px;align-items:center}
+  .typing i{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:blink 1.2s infinite}
+  .typing i:nth-child(2){animation-delay:.2s}.typing i:nth-child(3){animation-delay:.4s}
+  @keyframes blink{0%,60%,100%{opacity:.3}30%{opacity:1}}
+  /* quote / daily */
+  .quote-card{background:linear-gradient(135deg,#1B3A6B,#2C5F9E);border-radius:20px;padding:24px 20px;text-align:center;margin-bottom:16px}
+  .quote-card .mark{font-size:40px;color:var(--gold);line-height:1;font-family:Georgia}
+  .quote-card blockquote{font-size:18px;line-height:1.5;font-family:Georgia;margin:4px 0 12px}
+  .quote-card cite{color:var(--gold-l);font-size:13px;font-style:normal}
+  textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:12px;color:var(--txt);font-size:16px;font-family:inherit;resize:vertical;min-height:80px;margin-top:8px}
+  .btn{background:var(--gold);color:#0D1B2A;border:none;border-radius:12px;padding:13px;font-weight:700;font-size:15px;cursor:pointer;width:100%;margin-top:10px}
+  .btn.ghost{background:var(--surface);color:var(--txt);border:1px solid var(--border)}
+  .empty{text-align:center;padding:44px 20px;color:var(--muted)}.empty .ic{font-size:48px;margin-bottom:12px}
+  .moods{display:flex;gap:9px;flex-wrap:wrap}
+  .mood{width:58px;height:66px;border-radius:15px;background:var(--bg);border:1px solid var(--border);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:25px}
+  .mood span{font-size:10px;color:var(--muted)}.mood.sel{border-color:var(--gold);background:rgba(244,162,97,.15);transform:scale(1.05)}.mood.sel span{color:var(--gold)}
+  .slider label{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px}
+  .slider input{width:100%;accent-color:var(--gold)}.slider{margin:12px 0}
+  /* focus timer */
+  .timer{text-align:center;padding:20px}
+  .timer .clock{font-size:64px;font-weight:800;font-family:-apple-system,sans-serif;color:var(--gold);letter-spacing:2px}
+  .timer .lbl{color:var(--muted);font-size:13px;margin-bottom:10px}
+  .tmodes{display:flex;gap:8px;justify-content:center;margin-bottom:16px}
+  .tmode{padding:8px 14px;border-radius:20px;background:var(--surface);border:1px solid var(--border);color:var(--muted);font-size:13px;cursor:pointer}
+  .tmode.active{background:var(--gold);color:#0D1B2A;border-color:var(--gold)}
+  /* goals */
+  .goal{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;display:flex;gap:12px;align-items:center}
+  .goal .ic{font-size:22px}.goal .info{flex:1}.goal .tt{font-weight:600;font-size:14px;margin-bottom:3px}
+  .goal .meta{font-size:12px;color:var(--muted)}
+  .goal .pw{width:70px}.goal .pct{font-size:11px;color:var(--muted);text-align:right;margin-bottom:3px}
+  /* auth */
+  .auth{position:fixed;inset:0;background:var(--bg);z-index:200;display:none;flex-direction:column;overflow-y:auto;padding:calc(env(safe-area-inset-top) + 30px) 24px 40px}
+  .auth.show{display:flex}
+  .auth-inner{max-width:400px;margin:0 auto;width:100%}
+  .auth .big{font-size:46px;text-align:center;margin-bottom:6px}
+  .auth h1{font-size:26px;text-align:center;color:var(--gold);margin-bottom:6px}
+  .auth .sub{text-align:center;color:var(--muted);font-size:13px;line-height:1.5;margin-bottom:24px}
+  .auth input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:14px 16px;color:var(--txt);font-size:16px;margin-bottom:12px}
+  .auth .err{background:rgba(230,57,70,.15);border:1px solid rgba(230,57,70,.4);color:#FFB3B3;font-size:13px;padding:10px 14px;border-radius:11px;margin-bottom:12px;display:none}
+  .auth .switch{text-align:center;color:var(--muted);font-size:13px;margin-top:16px}
+  .auth .switch b{color:var(--gold);cursor:pointer}
+  .auth .skip{text-align:center;margin-top:20px;color:var(--muted);font-size:12px;text-decoration:underline;cursor:pointer}
+  nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:640px;background:rgba(13,27,42,.96);backdrop-filter:blur(16px);border-top:1px solid var(--border);display:flex;padding:8px 0 calc(8px + env(safe-area-inset-bottom));z-index:50}
+  nav button{flex:1;background:none;border:none;color:var(--muted);font-size:10px;font-weight:600;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px}
+  nav button .ic{font-size:20px;transition:.2s}
+  nav button.active{color:var(--gold)}nav button.active .ic{transform:scale(1.15)}
+  .toast{position:fixed;bottom:calc(88px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:var(--surface2);color:var(--txt);padding:11px 20px;border-radius:22px;font-size:13px;font-weight:600;z-index:210;opacity:0;transition:.3s;border:1px solid var(--border);pointer-events:none;white-space:nowrap}
+  .toast.show{opacity:1}
+  .install{position:fixed;bottom:calc(84px + env(safe-area-inset-bottom));left:14px;right:14px;max-width:612px;margin:0 auto;background:var(--gold);color:#0D1B2A;border-radius:14px;padding:12px 16px;display:none;align-items:center;gap:12px;z-index:60;box-shadow:0 8px 30px rgba(0,0,0,.4)}
+  .install.show{display:flex}.install b{font-size:14px}.install small{font-size:12px;opacity:.8}
+  .install button{margin-left:auto;background:#0D1B2A;color:var(--gold);border:none;padding:9px 15px;border-radius:9px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap}.install .x{background:none;color:#0D1B2A;padding:4px 8px;font-size:18px}
+  .chart-wrap{position:relative;height:220px}
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div class="auth" id="auth">
+  <div class="auth-inner">
+    <div class="big">🧘</div>
+    <h1 id="authTitle">Welcome to SthirMind</h1>
+    <div class="sub">Free forever for youngsters 💛<br>A gift through Hope Commoners Foundation</div>
+    <div class="err" id="authErr"></div>
+    <div id="signupFields">
+      <input id="suName" placeholder="Your name" maxlength="40" />
+      <input id="suPhone" placeholder="Phone number" inputmode="tel" maxlength="15" />
+    </div>
+    <input id="auEmail" placeholder="Email address" inputmode="email" autocomplete="email" />
+    <input id="auPass" type="password" placeholder="Password (min 6 chars)" autocomplete="current-password" />
+    <button class="btn" id="authBtn" onclick="doAuth()">Create Account →</button>
+    <div class="switch" id="authSwitch">Already have an account? <b onclick="toggleAuth()">Log in</b></div>
+    <div class="skip" onclick="skipAuth()">Continue as guest (data stays on this device)</div>
+  </div>
+</div>
+
+<div class="app">
+  <header>
+    <div class="logo">🧘 Sthir<span>Mind</span></div>
+    <div class="streak" id="streak">🔥 0 day</div>
+  </header>
+
+  <!-- HOME (Dashboard) -->
+  <section class="view active" id="v-home">
+    <div class="hero">
+      <div class="eyebrow" id="greet">Good day 🙏</div>
+      <h2>Lead With Clarity.<br>Build With Equanimity.</h2>
+      <p>Your mind's operating system — wisdom, coach, habits & focus.</p>
+    </div>
+    <div class="freebar">💛 Free forever for youngsters — through <b>Hope Commoners Foundation</b></div>
+    <div class="card">
+      <div class="ringwrap">
+        <div class="ring"><canvas id="ringCanvas" width="120" height="120"></canvas><div class="val"><div class="num" id="hScore">--</div><div class="tier" id="hTier"></div></div></div>
+        <div style="flex:1"><h4 style="margin-bottom:6px">Happiness Score</h4><p style="font-size:13px" id="hMsg">Do a daily check-in to calibrate your 5H balance.</p><button class="btn" style="margin-top:8px;padding:10px" onclick="nav('grow')">Daily Check-in ✨</button></div>
+      </div>
+    </div>
+    <div class="grid" id="pillars"></div>
+    <div class="card"><h4>✅ Today's Habits</h4><div class="habits" id="habits"></div></div>
+    <div class="card"><h4>🧠 AI Insights</h4><div id="insights"></div></div>
+    <div class="card"><h4>📈 7-Day Trend</h4><div class="chart-wrap"><canvas id="trendChart"></canvas></div></div>
+  </section>
+
+  <!-- COACH -->
+  <section class="view" id="v-coach">
+    <div class="sec-title" style="margin-top:2px">🤖 AI Coach</div>
+    <div class="agents" id="agents"></div>
+    <div class="chat" id="coachChat"></div>
+    <div class="chatbar" style="position:fixed;bottom:calc(72px + env(safe-area-inset-bottom));left:0;right:0;max-width:640px;margin:0 auto;padding:10px 14px;background:rgba(13,27,42,.96);backdrop-filter:blur(14px);border-top:1px solid var(--border)">
+      <input id="coachIn" placeholder="Ask your coach anything…" onkeydown="if(event.key==='Enter')coachSend()" />
+      <button onclick="coachSend()">➤</button>
+    </div>
+    <div style="height:56px"></div>
+  </section>
+
+  <!-- GROW (Check-in + Focus + Journal + Goals) -->
+  <section class="view" id="v-grow">
+    <div class="sec-title" style="margin-top:2px">🌱 Grow</div>
+    <div class="tabs">
+      <div class="tab active" onclick="growTab(this,'checkin')">Check-in</div>
+      <div class="tab" onclick="growTab(this,'focus')">Focus</div>
+      <div class="tab" onclick="growTab(this,'journal')">Journal</div>
+      <div class="tab" onclick="growTab(this,'goals')">Goals</div>
+    </div>
+    <div class="tabpane active" id="g-checkin">
+      <div class="card"><h4>🌤 How are you feeling?</h4><div class="moods" id="ciMoods" style="margin-top:8px"></div></div>
+      <div class="card"><h4>Rate your 4 pillars today</h4>
+        <div class="slider"><label><span>❤️ Heart — relationships</span><span id="v-heart" style="color:var(--heart)">0</span></label><input id="s-heart" type="range" min="0" max="100" value="0" oninput="setP('heart',this.value)"></div>
+        <div class="slider"><label><span>🌟 Hope — goals & purpose</span><span id="v-hope" style="color:var(--hope)">0</span></label><input id="s-hope" type="range" min="0" max="100" value="0" oninput="setP('hope',this.value)"></div>
+        <div class="slider"><label><span>💪 Health — body & mind</span><span id="v-health" style="color:var(--health)">0</span></label><input id="s-health" type="range" min="0" max="100" value="0" oninput="setP('health',this.value)"></div>
+        <div class="slider"><label><span>🤝 Help — contribution</span><span id="v-help" style="color:var(--help)">0</span></label><input id="s-help" type="range" min="0" max="100" value="0" oninput="setP('help',this.value)"></div>
+      </div>
+      <div class="card"><h4>🙏 3 things you're grateful for</h4>
+        <textarea id="grat" placeholder="Today I'm grateful for…" style="min-height:70px"></textarea></div>
+      <button class="btn" onclick="submitCheckin()">Complete Check-in ✨</button>
+    </div>
+    <div class="tabpane" id="g-focus">
+      <div class="card"><div class="timer">
+        <div class="tmodes"><div class="tmode active" onclick="setTimer(25,this)">Focus 25</div><div class="tmode" onclick="setTimer(50,this)">Deep 50</div><div class="tmode" onclick="setTimer(5,this)">Break 5</div></div>
+        <div class="clock" id="clock">25:00</div>
+        <div class="lbl" id="tlbl">Study / Deep Work</div>
+        <button class="btn" id="tBtn" style="max-width:200px;margin:10px auto 0" onclick="toggleTimer()">▶ Start Focus</button>
+      </div></div>
+      <div class="card"><h4>🎯 Focus Sessions</h4><p id="focusStats">0 sessions today · 0 min total</p></div>
+      <div class="card"><h4>💡 Why Focus?</h4><p>Deep, distraction-free work is a superpower for students & young builders. Each session trains your attention like a muscle. Start with 25 minutes — no phone, one task.</p></div>
+    </div>
+    <div class="tabpane" id="g-journal">
+      <div class="card"><h4>📓 Private Journal</h4><p style="font-size:12px;color:var(--muted)">Only you can see this. Write freely — thoughts, worries, wins.</p>
+        <textarea id="journalIn" placeholder="What's on your mind today?" style="min-height:120px"></textarea>
+        <button class="btn" onclick="saveJournal()">Save & Get a Reflection 🪷</button>
+      </div>
+      <div id="journalReflect"></div>
+      <div class="sec-title">Past Entries</div>
+      <div id="journalList"></div>
+    </div>
+    <div class="tabpane" id="g-goals">
+      <div id="goalsList"></div>
+      <div class="card"><h4>➕ Add a Goal</h4>
+        <input class="search" id="goalTitle" placeholder="e.g. Read 12 books this year" style="margin-bottom:10px" />
+        <div class="pills" id="goalPillars"></div>
+        <button class="btn" onclick="addGoal()">Add Goal</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- WISDOM -->
+  <section class="view" id="v-wisdom">
+    <div class="sec-title" style="margin-top:2px">📚 Wisdom Library</div>
+    <input class="search" id="search" placeholder="🔍 Search books, authors…" oninput="renderBooks()" />
+    <div class="pills" id="bookPills"></div>
+    <div class="grid" id="books"></div>
+  </section>
+  <section class="view" id="v-detail"></section>
+
+  <!-- ME -->
+  <section class="view" id="v-me">
+    <div class="sec-title" style="margin-top:2px" id="meHi">👤 My Journey</div>
+    <div class="card"><h4>📈 Mood · Last 7 Days</h4><div id="meMoodHist"></div></div>
+    <div class="card"><h4>📊 Analytics</h4><div class="chart-wrap"><canvas id="radarChart"></canvas></div></div>
+    <div class="card"><h4>🔥 Streak & Activity</h4><p id="meStats"></p></div>
+    <div class="card" id="acctCard"></div>
+    <div class="card" style="background:rgba(157,78,221,.12);border-color:rgba(157,78,221,.3)"><h4 style="color:#C89BF0">💛 A Gift from Hope Commoners</h4><p>SthirMind is <b>completely free, forever</b> for young people — a gift through the <b>Hope Commoners Foundation</b>. No fees, no ads. Pass it on. 🙏</p></div>
+  </section>
+</div>
+
+<div class="install" id="install">
+  <div><b>Install SthirMind</b><br><small>Add to your home screen</small></div>
+  <button onclick="doInstall()">Install</button>
+  <button class="x" onclick="document.getElementById('install').classList.remove('show')">✕</button>
+</div>
+<div class="toast" id="toast"></div>
+
+<nav>
+  <button class="active" data-v="home" onclick="nav('home')"><span class="ic">🏠</span>Home</button>
+  <button data-v="wisdom" onclick="nav('wisdom')"><span class="ic">📚</span>Wisdom</button>
+  <button data-v="grow" onclick="nav('grow')"><span class="ic">🌱</span>Grow</button>
+  <button data-v="coach" onclick="nav('coach')"><span class="ic">🤖</span>Coach</button>
+  <button data-v="me" onclick="nav('me')"><span class="ic">👤</span>Me</button>
+</nav>
+
+<script>
+// ═══ DATA ═══
+const PILLARS={Heart:'#E63946',Hope:'#457B9D',Health:'#52B788',Help:'#9D4EDD',Happiness:'#F4A261'};
+const COVERS={Heart:'linear-gradient(135deg,#E63946,#FF6B6B)',Hope:'linear-gradient(135deg,#457B9D,#1D3557)',Health:'linear-gradient(135deg,#52B788,#1B4332)',Help:'linear-gradient(135deg,#9D4EDD,#3D0C4E)',Happiness:'linear-gradient(135deg,#F4A261,#E76F51)'};
+const BOOKS=[
+ {id:'meditations',title:'Meditations',author:'Marcus Aurelius',pillar:'Heart',emoji:'🏛',summary:['A Roman emperor\'s private journal — the ultimate manual on leading from values under pressure. You do not control events, only your judgement of them.','Separate what is up to you (choices, effort, attitude) from what is not (outcomes, others). Peace comes from investing only in the former.'],keys:['You have power over your mind — not outside events.','The obstacle in the path becomes the path.','Waste no time arguing what a good person should be. Be one.','The best revenge is to not be like the one who wronged you.'],insight:'Your calm is contagious. Refuse to be disturbed by what you cannot control, and your team borrows that stability.'},
+ {id:'atomic-habits',title:'Atomic Habits',author:'James Clear',pillar:'Health',emoji:'⚛️',summary:['Tiny changes, remarkable results. Habits are compound interest — 1% better daily makes you 37× better in a year.','You fall to the level of your systems, not your goals. Focus on identity ("I am a healthy person"), not outcomes.'],keys:['Make it obvious, attractive, easy, satisfying.','Environment shapes behaviour — design it.','Every action is a vote for who you wish to become.','Never miss twice.'],insight:'Sustainable leadership rests on sustainable energy. Your daily systems are the foundation of every decision.'},
+ {id:'mans-search',title:'Man’s Search for Meaning',author:'Viktor Frankl',pillar:'Hope',emoji:'🕯',summary:['Frankl survived the camps with one insight: those with a Why to live could bear almost any How.','Between stimulus and response is a space. In that space is our power to choose our response — and our freedom.'],keys:['He who has a Why can bear almost any How.','Everything can be taken but the freedom to choose your attitude.','Suffering finds meaning the moment it has purpose.','What matters is what life expects from us.'],insight:'Hope is not optimism. It is the disciplined belief that your actions matter — even in uncertainty.'},
+ {id:'give-and-take',title:'Give and Take',author:'Adam Grant',pillar:'Help',emoji:'🤝',summary:['Three styles: Takers, Matchers, Givers. Givers are both worst AND best performers — the difference is giving strategically.','Generous people build networks of goodwill that compound over decades.'],keys:['Givers who succeed protect their time and energy.','The best networkers create more value than they capture.','Look for disagreeable givers — gruff outside, generous within.','Help without keeping score, but don\'t let takers drain you.'],insight:'Service is the ultimate moat. Solve real problems and reputation, loyalty and opportunity follow.'},
+ {id:'flow',title:'Flow',author:'Mihaly Csikszentmihalyi',pillar:'Happiness',emoji:'🌊',summary:['Happiness is cultivated, not stumbled upon. Flow is total absorption where challenge meets skill.','The best moments occur when mind or body is stretched to accomplish something difficult and worthwhile.'],keys:['Flow needs clear goals, feedback, and challenge matched to skill.','Control of consciousness = quality of life.','More flow, more meaning.','Enjoyment lives between boredom and anxiety.'],insight:'Design work at the edge of ability — that is where engagement and quiet joy are born.'},
+ {id:'deep-work',title:'Deep Work',author:'Cal Newport',pillar:'Health',emoji:'🎯',summary:['Focus without distraction on demanding tasks is rare — and hugely valuable.','A depth-driven life is economically smart and deeply fulfilling. Shallow work is a comfortable trap.'],keys:['Deep work = distraction-free concentration.','Busyness is not productivity.','Embrace boredom; resist novelty.','Drain the shallows.'],insight:'Attention is your most finite resource. Protect deep-focus blocks and your thinking multiplies.'},
+ {id:'seven-habits',title:'The 7 Habits',author:'Stephen Covey',pillar:'Heart',emoji:'🧭',summary:['A principle-centred path from dependence to interdependence. Character, not tricks, builds trust.','Begin with the end in mind. Put first things first. Seek first to understand.'],keys:['Be proactive.','Begin with the end in mind.','Put first things first.','Sharpen the saw.'],insight:'Leadership is a transfer of trust. Build character first — competence without it collapses.'},
+ {id:'thinking-fast',title:'Thinking, Fast and Slow',author:'Daniel Kahneman',pillar:'Hope',emoji:'🧠',summary:['Two systems: System 1 (fast, intuitive) and System 2 (slow, logical). Errors come from trusting System 1 when we need System 2.','Knowing biases — anchoring, loss aversion, overconfidence — is the foundation of clear judgement.'],keys:['We are blind to our blindness.','Losses loom larger than gains.','Slow down for high-stakes calls.','Beware the story your mind invents.'],insight:'Great decisions come from knowing when to trust your gut and when to override it.'},
+];
+const DAILY=[{q:'You have power over your mind — not outside events. Realize this, and you will find strength.',a:'Marcus Aurelius',p:'Heart'},{q:'He who has a Why to live can bear almost any How.',a:'Viktor Frankl',p:'Hope'},{q:'Every action you take is a vote for the type of person you wish to become.',a:'James Clear',p:'Health'},{q:'The best way to find yourself is to lose yourself in the service of others.',a:'Mahatma Gandhi',p:'Help'},{q:'Within every obstacle is an opportunity to improve our condition.',a:'Marcus Aurelius',p:'Heart'}];
+const AGENTS=[{k:'life',e:'🧭',n:'Life Coach'},{k:'study',e:'📚',n:'Study Coach'},{k:'purpose',e:'🌟',n:'Purpose'},{k:'heart',e:'❤️',n:'Relationships'},{k:'mind',e:'🧘',n:'Mind & Calm'},{k:'health',e:'💪',n:'Health'}];
+const HABITS_DEF=[{e:'💧',l:'Hydrate'},{e:'🧘',l:'Meditate'},{e:'📖',l:'Read'},{e:'🏃',l:'Move'},{e:'🙏',l:'Gratitude'}];
+const MOODS=[{e:'😄',l:'Great'},{e:'🙂',l:'Good'},{e:'😐',l:'Okay'},{e:'😔',l:'Low'},{e:'😣',l:'Stressed'}];
+
+// ═══ STATE / STORAGE ═══
+let TOKEN=localStorage.getItem('sthir_token')||'';
+const DB={
+  get k(){return JSON.parse(localStorage.getItem('sthir')||'{}')},
+  set(o){const d={...this.k,...o};localStorage.setItem('sthir',JSON.stringify(d));syncUp();},
+  get name(){return this.k.name||''},get moods(){return this.k.moods||[]},get streak(){return this.k.streak||0},
+  get lastDay(){return this.k.lastDay||''},get bookmarks(){return this.k.bookmarks||[]},get progress(){return this.k.progress||{}},
+  get pillar(){return this.k.pillar||{heart:0,hope:0,health:0,help:0}},get happiness(){return this.k.happiness||0},
+  get habits(){return this.k.habits||{}},get goals(){return this.k.goals||[]},get journal(){return this.k.journal||[]},
+  get focus(){return this.k.focus||{}},
+};
+let activeFilter='All',currentBook=null,activeAgent='life';
+function today(){return new Date().toISOString().slice(0,10);}
+function esc(s){return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+function fmtReply(s){return esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\n/g,'<br>');}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1900);}
+function haptic(){if(navigator.vibrate)navigator.vibrate(8);}
+
+// ═══ AUTH ═══
+let authMode='signup';
+function toggleAuth(){authMode=authMode==='signup'?'login':'signup';
+  document.getElementById('signupFields').style.display=authMode==='signup'?'block':'none';
+  document.getElementById('authTitle').textContent=authMode==='signup'?'Create your account':'Welcome back';
+  document.getElementById('authBtn').textContent=authMode==='signup'?'Create Account →':'Log In →';
+  document.getElementById('authSwitch').innerHTML=authMode==='signup'?'Already have an account? <b onclick="toggleAuth()">Log in</b>':'New here? <b onclick="toggleAuth()">Create account</b>';
+  document.getElementById('authErr').style.display='none';
+}
+async function doAuth(){
+  const err=document.getElementById('authErr');err.style.display='none';
+  const email=document.getElementById('auEmail').value.trim();
+  const password=document.getElementById('auPass').value;
+  if(!email||!password){return showErr('Please enter email and password.');}
+  if(password.length<6){return showErr('Password must be at least 6 characters.');}
+  let payload={email,password},path='/api/login';
+  if(authMode==='signup'){
+    const name=document.getElementById('suName').value.trim();
+    const phone=document.getElementById('suPhone').value.trim();
+    if(!name)return showErr('Please enter your name.');
+    payload={name,phone,email,password};path='/api/signup';
+  }
+  document.getElementById('authBtn').textContent='Please wait…';
+  try{
+    const r=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const d=await r.json();
+    if(!r.ok){document.getElementById('authBtn').textContent=authMode==='signup'?'Create Account →':'Log In →';return showErr(d.error||'Something went wrong.');}
+    TOKEN=d.token;localStorage.setItem('sthir_token',TOKEN);
+    const merged={...DB.k,...(d.user.data||{}),name:d.user.name,email:d.user.email,phone:d.user.phone};
+    localStorage.setItem('sthir',JSON.stringify(merged));
+    document.getElementById('auth').classList.remove('show');
+    bootUI();toast('Welcome, '+d.user.name+'! 🙏');
+  }catch(e){document.getElementById('authBtn').textContent=authMode==='signup'?'Create Account →':'Log In →';showErr('Network error. Try again.');}
+}
+function showErr(m){const e=document.getElementById('authErr');e.textContent=m;e.style.display='block';}
+function skipAuth(){localStorage.setItem('sthir_guest','1');document.getElementById('auth').classList.remove('show');if(!DB.name){const n=prompt('What should we call you?')||'friend';DB.set({name:n});}bootUI();}
+function logout(){localStorage.removeItem('sthir_token');localStorage.removeItem('sthir_guest');localStorage.removeItem('sthir');location.reload();}
+
+let syncT=null;
+function syncUp(){if(!TOKEN)return;clearTimeout(syncT);syncT=setTimeout(()=>{
+  const {name,email,phone,...rest}=DB.k;
+  fetch('/api/sync',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+TOKEN},body:JSON.stringify({data:DB.k})}).catch(()=>{});
+},1200);}
+
+// ═══ RENDER: HOME ═══
+function drawRing(score){const c=document.getElementById('ringCanvas');if(!c)return;const ctx=c.getContext('2d');const cx=60,cy=60,r=48,lw=10;ctx.clearRect(0,0,120,120);ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.strokeStyle='rgba(255,255,255,.07)';ctx.lineWidth=lw;ctx.stroke();const g=ctx.createLinearGradient(0,0,120,120);g.addColorStop(0,'#F4A261');g.addColorStop(1,'#E63946');ctx.beginPath();ctx.arc(cx,cy,r,-Math.PI/2,-Math.PI/2+(score/100)*Math.PI*2);ctx.strokeStyle=g;ctx.lineWidth=lw;ctx.lineCap='round';ctx.stroke();}
+function tier(s){return s>=80?'🚀 Thriving':s>=60?'🌱 Flourishing':s>=40?'🌿 Developing':s>0?'🌱 Starting':'—';}
+function renderHome(){
+  greet();
+  const h=DB.happiness;document.getElementById('hScore').textContent=h||'--';document.getElementById('hTier').textContent=tier(h);drawRing(h);
+  const p=DB.pillar;
+  document.getElementById('pillars').innerHTML=[['heart','❤️','Heart'],['hope','🌟','Hope'],['health','💪','Health'],['help','🤝','Help']].map(([k,e,l])=>
+    `<div class="pcard ${k}"><div class="emoji">${e}</div><div class="lbl">${l}</div><div class="val">${p[k]}</div><div class="barbg"><div class="bar" style="width:0"></div></div></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#pillars .pcard').forEach((c,i)=>{const k=['heart','hope','health','help'][i];c.querySelector('.bar').style.width=p[k]+'%';}),200);
+  const hb=DB.habits[today()]||{};
+  document.getElementById('habits').innerHTML=HABITS_DEF.map((x,i)=>`<div class="habit ${hb[i]?'done':''}" onclick="toggleHabit(${i})">${x.e} ${x.l}</div>`).join('');
+  const ins=[{p:'health',t:'Focus & Sleep',x:'Short focus sessions + 7-8h sleep can lift your Health score by up to 8 points.'},{p:'hope',t:'Goal Momentum',x:'Writing goals down makes you 42% more likely to achieve them. Add one in Grow → Goals.'},{p:'heart',t:'Connection',x:'A 30-min deep talk with someone you trust boosts your Heart score. Reach out today.'}];
+  document.getElementById('insights').innerHTML=ins.map(i=>`<div class="insight ${i.p}"><div class="t">${i.t}</div><p>${i.x}</p></div>`).join('');
+  buildTrend();
+}
+let trendChart=null;
+function buildTrend(){const el=document.getElementById('trendChart');if(!el)return;const days=[];for(let i=6;i>=0;i--){const d=new Date(Date.now()-i*86400000).toISOString().slice(0,10);const c=(DB.k.checkins||[]).find(x=>x.day===d);days.push(c?c.h:null);}
+  const lbls=['6d','5d','4d','3d','2d','1d','Today'];
+  if(trendChart)trendChart.destroy();
+  trendChart=new Chart(el,{type:'line',data:{labels:lbls,datasets:[{data:days,borderColor:'#F4A261',backgroundColor:'rgba(244,162,97,.12)',tension:.4,fill:true,pointBackgroundColor:'#F4A261',pointRadius:4,spanGaps:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#8B9BB4'}},y:{grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#8B9BB4'},min:0,max:100}}}});}
+function toggleHabit(i){const d=today();const hb={...(DB.habits[d]||{})};hb[i]=!hb[i];DB.set({habits:{...DB.habits,[d]:hb}});renderHome();bumpStreak();haptic();}
+function greet(){const h=new Date().getHours();const g=h<12?'Good morning':h<17?'Good afternoon':'Good evening';const el=document.getElementById('greet');if(el)el.textContent=(DB.name?g+', '+DB.name:g)+' 🙏';}
+
+// ═══ COACH ═══
+const coachHist={};
+function renderAgents(){document.getElementById('agents').innerHTML=AGENTS.map(a=>`<div class="agent ${a.k===activeAgent?'active':''}" onclick="setAgent('${a.k}')">${a.e} ${a.n}</div>`).join('');renderCoachChat();}
+function setAgent(k){activeAgent=k;renderAgents();haptic();}
+function renderCoachChat(){const c=document.getElementById('coachChat');const h=coachHist[activeAgent]||[];
+  c.innerHTML=(h.length?'':`<div class="msg ai">Namaste 🙏 I'm your ${AGENTS.find(a=>a.k===activeAgent).n}. What's on your mind today?</div>`)+h.map(m=>`<div class="msg ${m.role==='user'?'me':'ai'}">${m.role==='user'?esc(m.content):fmtReply(m.content)}</div>`).join('');c.scrollTop=c.scrollHeight;}
+async function coachSend(){const inp=document.getElementById('coachIn');const q=inp.value.trim();if(!q)return;const c=document.getElementById('coachChat');inp.value='';haptic();
+  const h=coachHist[activeAgent]=coachHist[activeAgent]||[];h.push({role:'user',content:q});renderCoachChat();
+  const t=document.createElement('div');t.className='msg ai';t.innerHTML='<span class="typing"><i></i><i></i><i></i></span>';c.appendChild(t);c.scrollTop=c.scrollHeight;
+  const reply=await askAI(h,'',activeAgent);h.push({role:'assistant',content:reply});renderCoachChat();}
+async function askAI(messages,book,agent){
+  try{const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages,book,agent})});
+    const d=await r.json();
+    if(d.reply && !/warming up/i.test(d.reply))return d.reply;
+  }catch(e){}
+  return localCoach(messages,agent,book);
+}
+// Offline wisdom-based coach — always responds, even without an API key
+function localCoach(messages,agent,book){
+  const q=(messages.filter(m=>m.role==='user').pop()||{}).content||'';
+  const ql=q.toLowerCase();
+  const wisdom={
+    life:'Marcus Aurelius reminds us: you have power over your mind, not outside events. Focus on what is yours to control — your effort and attitude.',
+    study:'James Clear teaches: you fall to the level of your systems. For focus, remove your phone from the room and start with just one 25-minute session.',
+    purpose:'Viktor Frankl found that those with a Why can bear almost any How. Name one meaningful reason behind your goal — let it pull you forward.',
+    heart:'Real connection heals. A 30-minute honest conversation with someone you trust can lift your whole week.',
+    mind:'Between stimulus and response there is a space. Take three slow breaths — 4 in, 4 hold, 4 out — and notice the calm return.',
+    health:'Your body is the foundation of a clear mind. Sleep, water, and a short walk today will do more than you expect.',
+  };
+  let open;
+  if(/stress|anxi|tension|pareshan|dukh|sad|low|udaas|depress/.test(ql))open='I hear you — that sounds heavy, and it takes courage to name it. 🙏 ';
+  else if(/exam|study|padh|focus|concentrat|distract/.test(ql))open='Studying can feel overwhelming, but you can do this one step at a time. ';
+  else if(/goal|dream|future|career|kya karu/.test(ql))open='Beautiful that you\'re thinking about your path. ';
+  else if(/thank|shukriya|great|good/.test(ql))open='I\'m glad this helps. 💛 ';
+  else open='Thank you for sharing that with me. ';
+  const w=wisdom[agent]||wisdom.life;
+  const step=['Try one small step today: '+['write down the single most important task and do only that','take 5 quiet minutes to breathe before you decide','send one honest message to someone you care about','do a 25-minute focus session with no phone','note 3 things that went right today'][Math.floor(Math.random()*5)]+'.'].join('');
+  return open+w+'\n\n'+step+(book?'\n\nAnd remember what '+book+' teaches — apply one idea from it this week.':'');
+}
+
+// ═══ GROW: check-in ═══
+function growTab(el,id){el.parentElement.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');document.querySelectorAll('#v-grow .tabpane').forEach(p=>p.classList.remove('active'));document.getElementById('g-'+id).classList.add('active');if(id==='goals')renderGoals();if(id==='journal')renderJournal();if(id==='focus')renderFocus();if(id==='checkin')renderCheckin();haptic();}
+function renderCheckin(){const tm=DB.moods.find(m=>m.day===today());document.getElementById('ciMoods').innerHTML=MOODS.map((m,i)=>`<div class="mood ${tm&&tm.mood===i?'sel':''}" onclick="ciMood(${i})"><div>${m.e}</div><span>${m.l}</span></div>`).join('');const p=DB.pillar;['heart','hope','health','help'].forEach(k=>{document.getElementById('v-'+k).textContent=p[k];const s=document.getElementById('s-'+k);if(s)s.value=p[k];});}
+function ciMood(i){let m=DB.moods.filter(x=>x.day!==today());m.push({day:today(),mood:i,ts:Date.now()});DB.set({moods:m});renderCheckin();haptic();}
+function setP(k,v){document.getElementById('v-'+k).textContent=v;const p={...DB.pillar};p[k]=+v;DB.set({pillar:p});}
+function submitCheckin(){const p=DB.pillar;const h=Math.round(.28*p.heart+.25*p.hope+.27*p.health+.20*p.help);let c=(DB.k.checkins||[]).filter(x=>x.day!==today());c.push({day:today(),h,grat:document.getElementById('grat').value});DB.set({happiness:h,checkins:c});bumpStreak();toast('Check-in complete! Happiness: '+h+' 🎉');nav('home');}
+
+// ═══ GROW: focus timer (YOUTH FEATURE 1) ═══
+let tSecs=1500,tTotal=1500,tRun=false,tInt=null,tMode='Study / Deep Work';
+function setTimer(min,el){if(tRun)return;tSecs=tTotal=min*60;document.querySelectorAll('.tmode').forEach(t=>t.classList.remove('active'));if(el)el.classList.add('active');tMode=min===5?'Break':min===50?'Deep Work':'Study / Deep Work';document.getElementById('tlbl').textContent=tMode;renderClock();}
+function renderClock(){const m=Math.floor(tSecs/60),s=tSecs%60;document.getElementById('clock').textContent=m+':'+(s<10?'0':'')+s;}
+function toggleTimer(){tRun=!tRun;const b=document.getElementById('tBtn');b.textContent=tRun?'❚❚ Pause':'▶ Start Focus';haptic();
+  if(tRun){tInt=setInterval(()=>{tSecs--;renderClock();if(tSecs<=0){finishFocus();}},1000);}else clearInterval(tInt);}
+function finishFocus(){clearInterval(tInt);tRun=false;document.getElementById('tBtn').textContent='▶ Start Focus';const mins=Math.round(tTotal/60);const d=today();const f={...DB.focus};f[d]=f[d]||{sessions:0,mins:0};f[d].sessions++;f[d].mins+=mins;DB.set({focus:f});if(navigator.vibrate)navigator.vibrate([100,50,100]);toast('Focus session done! 🎉 +'+mins+' min');bumpStreak();tSecs=tTotal;renderClock();renderFocus();}
+function renderFocus(){const f=DB.focus[today()]||{sessions:0,mins:0};document.getElementById('focusStats').textContent=f.sessions+' session'+(f.sessions===1?'':'s')+' today · '+f.mins+' min total';}
+
+// ═══ GROW: journal (YOUTH FEATURE 2) ═══
+async function saveJournal(){const t=document.getElementById('journalIn').value.trim();if(!t){toast('Write something first ✍️');return;}
+  let j=DB.journal.slice();j.unshift({ts:Date.now(),text:t});DB.set({journal:j});document.getElementById('journalIn').value='';bumpStreak();
+  const rf=document.getElementById('journalReflect');rf.innerHTML='<div class="card"><h4>🪷 Reflecting…</h4><span class="typing"><i></i><i></i><i></i></span></div>';
+  const reply=await askAI([{role:'user',content:'Here is my journal entry. Reflect back with warmth and one gentle insight in 3-4 sentences: '+t}],'','mind');
+  rf.innerHTML='<div class="card"><h4>🪷 A Reflection for You</h4><p>'+fmtReply(reply)+'</p></div>';renderJournal();}
+function renderJournal(){document.getElementById('journalList').innerHTML=DB.journal.length?DB.journal.map(e=>`<div class="card"><p style="font-size:13px">${esc(e.text)}</p><div style="font-size:11px;color:var(--muted);margin-top:6px">${new Date(e.ts).toLocaleDateString()}</div></div>`).join(''):'<div class="empty"><div class="ic">📓</div>No entries yet. Your first reflection awaits.</div>';}
+
+// ═══ GROW: goals ═══
+function renderGoals(){const g=DB.goals;document.getElementById('goalPillars').innerHTML=Object.keys(PILLARS).slice(0,4).map((p,i)=>`<div class="pill ${i===0?'active':''}" data-p="${p}" onclick="pickGoalPillar(this)">${p}</div>`).join('');
+  document.getElementById('goalsList').innerHTML=g.length?g.map((x,i)=>`<div class="goal"><div class="ic">${x.emoji||'🎯'}</div><div class="info"><div class="tt">${esc(x.title)}</div><div class="meta">${x.pillar} · ${x.pct}%</div><div class="barbg" style="margin-top:6px"><div class="bar" style="width:${x.pct}%;background:${PILLARS[x.pillar]}"></div></div></div><button class="sbtn" onclick="bumpGoal(${i})">+</button></div>`).join(''):'<div class="empty"><div class="ic">🎯</div>No goals yet. Add your first below.</div>';}
+let goalPillar='Heart';
+function pickGoalPillar(el){goalPillar=el.dataset.p;el.parentElement.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));el.classList.add('active');}
+function addGoal(){const t=document.getElementById('goalTitle').value.trim();if(!t){toast('Enter a goal');return;}const emoji={Heart:'❤️',Hope:'🌟',Health:'💪',Help:'🤝'}[goalPillar];let g=DB.goals.slice();g.push({title:t,pillar:goalPillar,pct:0,emoji});DB.set({goals:g});document.getElementById('goalTitle').value='';renderGoals();toast('Goal added 🎯');}
+function bumpGoal(i){let g=DB.goals.slice();g[i].pct=Math.min(100,g[i].pct+10);DB.set({goals:g});renderGoals();if(g[i].pct>=100)toast('Goal complete! 🎉');haptic();}
+
+// ═══ WISDOM ═══
+function renderBookPills(){document.getElementById('bookPills').innerHTML=['All',...Object.keys(PILLARS)].map(c=>`<div class="pill ${c===activeFilter?'active':''}" onclick="setFilter('${c}')">${c}</div>`).join('');}
+function setFilter(c){activeFilter=c;renderBookPills();renderBooks();haptic();}
+function renderBooks(){const q=(document.getElementById('search').value||'').toLowerCase();const list=BOOKS.filter(b=>(activeFilter==='All'||b.pillar===activeFilter)&&(b.title.toLowerCase().includes(q)||b.author.toLowerCase().includes(q)));
+  document.getElementById('books').innerHTML=list.map(b=>{const bm=DB.bookmarks.includes(b.id);const pr=DB.progress[b.id]||0;return `<div class="book" onclick="openBook('${b.id}')"><span class="bm" onclick="event.stopPropagation();toggleBm('${b.id}')">${bm?'🔖':'🏷️'}</span><span class="pillar" style="background:${PILLARS[b.pillar]}">${b.pillar}</span><div class="cover" style="background:${COVERS[b.pillar]}">${b.emoji}</div><h3>${b.title}</h3><div class="author">${b.author}</div>${pr>0?`<div class="progress"><i style="width:${pr}%"></i></div>`:''}</div>`;}).join('')||'<div class="empty" style="grid-column:1/-1"><div class="ic">🔍</div>No books found</div>';}
+function toggleBm(id){let b=DB.bookmarks.slice();if(b.includes(id)){b=b.filter(x=>x!==id);toast('Removed');}else{b.push(id);toast('Saved 🔖');}DB.set({bookmarks:b});renderBooks();haptic();if(currentBook)openBook(currentBook,true);}
+function openBook(id,keep){currentBook=id;const b=BOOKS.find(x=>x.id===id);const bm=DB.bookmarks.includes(id);const pr=DB.progress[id]||0;
+  document.getElementById('v-detail').innerHTML=`<button class="back" onclick="nav('wisdom')">← Library</button>
+    <div style="display:flex;gap:14px;align-items:flex-start"><div class="detail-cover" style="background:${COVERS[b.pillar]}">${b.emoji}</div><div style="flex:1"><span class="pillar" style="position:static;display:inline-block;background:${PILLARS[b.pillar]};margin-bottom:8px">${b.pillar}</span><h2 style="font-size:19px;line-height:1.25">${b.title}</h2><div style="color:var(--muted);font-size:14px;margin-top:4px">${b.author}</div><button class="btn" style="margin-top:10px;padding:9px" onclick="toggleBm('${b.id}')">${bm?'🔖 Saved':'🏷️ Save'}</button></div></div>
+    <div class="tabs"><div class="tab active" onclick="tab(this,'sum')">Summary</div><div class="tab" onclick="tab(this,'aud')">Audio</div><div class="tab" onclick="tab(this,'chat')">Ask AI</div></div>
+    <div class="tabpane active" id="tp-sum">${b.summary.map(p=>`<p class="summary-para">${p}</p>`).join('')}<div class="sec-title">💡 Key Takeaways</div>${b.keys.map(k=>`<div class="keypt">${k}</div>`).join('')}<button class="btn" onclick="markRead('${b.id}')">✓ Mark as Read</button></div>
+    <div class="tabpane" id="tp-aud"><div class="player"><div style="font-size:13px;color:var(--muted)">Now Playing</div><div style="font-weight:700;margin:4px 0 2px">${b.title}</div><div class="voice-tag">🎙 Human-style narration</div><div class="wave" id="wave"></div><div class="pctrl"><button class="sbtn" onclick="seek(-15)">-15</button><button class="pbtn" id="playBtn" onclick="togglePlay()">▶</button><button class="sbtn" onclick="seek(15)">+15</button></div><div class="ptime"><span id="cur">0:00</span> / <span id="dur">--:--</span></div></div></div>
+    <div class="tabpane" id="tp-chat"><div class="chat" id="chat"><div class="msg ai">Namaste 🙏 Ask me anything about <b>${b.title}</b>.</div></div><div class="chatbar"><input id="chatIn" placeholder="Ask about this book…" onkeydown="if(event.key==='Enter')sendChat()" /><button onclick="sendChat()">➤</button></div></div>`;
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.getElementById('v-detail').classList.add('active');if(!keep)window.scrollTo(0,0);}
+function tab(el,id){el.parentElement.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');document.querySelectorAll('#v-detail .tabpane').forEach(p=>p.classList.remove('active'));document.getElementById('tp-'+id).classList.add('active');if(id==='aud')buildWave();else{if('speechSynthesis'in window)speechSynthesis.cancel();stopAudio();}haptic();}
+function markRead(id){DB.set({progress:{...DB.progress,[id]:100}});toast('Marked as read ✓');bumpStreak();openBook(id,true);}
+const bookHist={};
+async function sendChat(){const inp=document.getElementById('chatIn');const q=inp.value.trim();if(!q)return;const chat=document.getElementById('chat');const b=BOOKS.find(x=>x.id===currentBook);chat.innerHTML+=`<div class="msg me">${esc(q)}</div>`;inp.value='';chat.scrollTop=chat.scrollHeight;haptic();const h=bookHist[currentBook]=bookHist[currentBook]||[];h.push({role:'user',content:q});const t=document.createElement('div');t.className='msg ai';t.innerHTML='<span class="typing"><i></i><i></i><i></i></span>';chat.appendChild(t);chat.scrollTop=chat.scrollHeight;const reply=await askAI(h,b.title,'life');t.remove();h.push({role:'assistant',content:reply});chat.innerHTML+=`<div class="msg ai">${fmtReply(reply)}</div>`;chat.scrollTop=chat.scrollHeight;}
+
+// ═══ AUDIO (real voice) ═══
+let playing=false,audioT=0,audioTimer=null,waveBars=[],chunks=[],chunkIdx=0;
+function buildWave(){const w=document.getElementById('wave');if(!w)return;w.innerHTML='';waveBars=[];for(let i=0;i<40;i++){const b=document.createElement('i');b.style.height='8px';w.appendChild(b);waveBars.push(b);}const b=BOOKS.find(x=>x.id===currentBook);const text=[b.title+' by '+b.author+'.',...b.summary,'Key takeaways.',...b.keys,'Reflection. '+b.insight].join(' ');chunks=text.match(/[^.!?]+[.!?]+/g)||[text];chunkIdx=0;audioT=0;document.getElementById('dur').textContent=fmt(Math.round(text.split(' ').length/2.6));}
+function pickVoice(){const vs=speechSynthesis.getVoices();return vs.find(v=>/en-IN/i.test(v.lang))||vs.find(v=>/en-GB/i.test(v.lang))||vs.find(v=>/en-US/i.test(v.lang)&&/female|samantha|zira|aria/i.test(v.name))||vs.find(v=>/^en/i.test(v.lang))||vs[0];}
+function speakNext(){if(chunkIdx>=chunks.length){stopAudio();return;}const u=new SpeechSynthesisUtterance(chunks[chunkIdx].trim());const v=pickVoice();if(v)u.voice=v;u.rate=.95;u.pitch=1.02;u.onend=()=>{chunkIdx++;if(playing)speakNext();};speechSynthesis.speak(u);}
+function togglePlay(){if(!('speechSynthesis'in window)){toast('Audio not supported');return;}playing=!playing;haptic();document.getElementById('playBtn').textContent=playing?'❚❚':'▶';if(playing){speechSynthesis.cancel();speakNext();audioTimer=setInterval(()=>{audioT++;document.getElementById('cur').textContent=fmt(audioT);waveBars.forEach((b,i)=>b.style.height=(8+Math.abs(Math.sin(Date.now()/180+i/2))*38)+'px');},1000);}else{speechSynthesis.cancel();clearInterval(audioTimer);waveBars.forEach(b=>b.style.height='8px');}}
+function stopAudio(){playing=false;const pb=document.getElementById('playBtn');if(pb)pb.textContent='▶';clearInterval(audioTimer);waveBars.forEach(b=>b.style.height='8px');}
+function seek(s){if(s>0)chunkIdx=Math.min(chunks.length-1,chunkIdx+1);else chunkIdx=Math.max(0,chunkIdx-1);audioT=Math.max(0,audioT+s);document.getElementById('cur').textContent=fmt(audioT);haptic();if(playing){speechSynthesis.cancel();speakNext();}}
+function fmt(t){t=Math.max(0,Math.round(t));const m=Math.floor(t/60),s=t%60;return m+':'+(s<10?'0':'')+s;}
+
+// ═══ ME ═══
+let radar=null;
+function renderMe(){document.getElementById('meHi').textContent=DB.name?'👤 '+DB.name+"'s Journey":'👤 My Journey';
+  const days=[];for(let i=6;i>=0;i--){const d=new Date(Date.now()-i*86400000).toISOString().slice(0,10);const m=DB.moods.find(x=>x.day===d);days.push({d,m});}
+  document.getElementById('meMoodHist').innerHTML='<div style="display:flex;justify-content:space-between;gap:4px">'+days.map(x=>{const lbl=new Date(x.d).toLocaleDateString('en',{weekday:'short'})[0];return `<div style="flex:1;text-align:center"><div style="font-size:22px">${x.m?MOODS[x.m.mood].e:'·'}</div><div style="font-size:10px;color:var(--muted);margin-top:3px">${lbl}</div></div>`;}).join('')+'</div>';
+  const read=Object.values(DB.progress).filter(p=>p>=100).length;const fs=Object.values(DB.focus).reduce((a,f)=>a+(f.sessions||0),0);
+  document.getElementById('meStats').textContent=`🔥 ${DB.streak} day streak · ${DB.bookmarks.length} saved · ${read} read · ${fs} focus sessions · ${DB.journal.length} journal entries`;
+  const p=DB.pillar;const el=document.getElementById('radarChart');if(radar)radar.destroy();radar=new Chart(el,{type:'radar',data:{labels:['Heart','Hope','Health','Help'],datasets:[{data:[p.heart,p.hope,p.health,p.help],backgroundColor:'rgba(244,162,97,.2)',borderColor:'#F4A261',pointBackgroundColor:'#F4A261'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{r:{grid:{color:'rgba(255,255,255,.08)'},ticks:{color:'#8B9BB4',backdropColor:'transparent'},pointLabels:{color:'#EAF0F6'},min:0,max:100}}}});
+  const g=localStorage.getItem('sthir_guest');
+  document.getElementById('acctCard').innerHTML=TOKEN?`<h4>👤 Account</h4><p>${esc(DB.name)}<br><span style="color:var(--muted);font-size:12px">${esc(DB.k.email||'')} · ${esc(DB.k.phone||'')}</span></p><button class="btn ghost" style="margin-top:10px" onclick="logout()">Log Out</button>`:`<h4>☁️ Save Your Progress</h4><p>You're a guest — data is on this device only. Create an account to sync across devices.</p><button class="btn" style="margin-top:10px" onclick="location.reload()">Create Account</button>`;}
+
+// ═══ STREAK ═══
+function bumpStreak(){const t=today();if(DB.lastDay===t){refreshStreak();return;}const yest=new Date(Date.now()-86400000).toISOString().slice(0,10);const s=DB.lastDay===yest?DB.streak+1:1;DB.set({streak:s,lastDay:t});refreshStreak();}
+function refreshStreak(){document.getElementById('streak').textContent='🔥 '+DB.streak+' day'+(DB.streak===1?'':'s');}
+
+// ═══ NAV ═══
+function nav(v){if('speechSynthesis'in window)speechSynthesis.cancel();stopAudio();document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));document.getElementById('v-'+v).classList.add('active');document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.v===v));
+  if(v==='home')renderHome();if(v==='coach')renderAgents();if(v==='grow')renderCheckin();if(v==='wisdom'){renderBookPills();renderBooks();}if(v==='me')renderMe();
+  window.scrollTo(0,0);haptic();}
+
+// ═══ INSTALL ═══
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;if(!window.matchMedia('(display-mode: standalone)').matches)setTimeout(()=>document.getElementById('install').classList.add('show'),4000);});
+function doInstall(){document.getElementById('install').classList.remove('show');if(deferredPrompt){deferredPrompt.prompt();deferredPrompt=null;}}
+const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent),isStd=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+if(isIOS&&!isStd){setTimeout(()=>{const el=document.getElementById('install');el.querySelector('div').innerHTML='<b>Install SthirMind</b><br><small>Tap Share ⬆ then "Add to Home Screen"</small>';el.querySelector('button').style.display='none';el.classList.add('show');},4500);}
+
+// ═══ BOOT ═══
+function bootUI(){refreshStreak();renderHome();if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});}
+async function boot(){
+  if(TOKEN){try{const r=await fetch('/api/me',{headers:{'Authorization':'Bearer '+TOKEN}});if(r.ok){const d=await r.json();const merged={...DB.k,...(d.user.data||{}),name:d.user.name,email:d.user.email,phone:d.user.phone};localStorage.setItem('sthir',JSON.stringify(merged));document.getElementById('auth').classList.remove('show');bootUI();return;}else{TOKEN='';localStorage.removeItem('sthir_token');}}catch(e){document.getElementById('auth').classList.remove('show');bootUI();return;}}
+  if(localStorage.getItem('sthir_guest')){document.getElementById('auth').classList.remove('show');bootUI();}
+  else document.getElementById('auth').classList.add('show');
+}
+boot();
+</script>
+</body>
+</html>
