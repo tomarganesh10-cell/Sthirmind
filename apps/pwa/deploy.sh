@@ -19,10 +19,12 @@ mkdir -p $WEB_ROOT
 cp -r $APP_DIR/apps/pwa/* $WEB_ROOT/
 echo "[1/5] Files copied to $WEB_ROOT"
 
-# Load ANTHROPIC_API_KEY from .env if present
-AI_KEY=""
+# Load AI keys from .env if present (any one is enough)
+AI_KEY=""; GEMINI_KEY=""; GROQ_KEY=""
 if [ -f "$APP_DIR/.env" ]; then
   AI_KEY=$(grep -E '^ANTHROPIC_API_KEY=' $APP_DIR/.env | cut -d= -f2- | tr -d '"' | tr -d "'")
+  GEMINI_KEY=$(grep -E '^GEMINI_API_KEY=' $APP_DIR/.env | cut -d= -f2- | tr -d '"' | tr -d "'")
+  GROQ_KEY=$(grep -E '^GROQ_API_KEY=' $APP_DIR/.env | cut -d= -f2- | tr -d '"' | tr -d "'")
 fi
 [ "$AI_KEY" = "sk-ant-REPLACE_ME" ] && AI_KEY=""
 
@@ -38,6 +40,8 @@ mkdir -p /opt/sthirmind-data
 APP_SECRET=$(cat /opt/sthirmind-data/.secret)
 docker run -d --name sthir-ai --restart always \
   -e ANTHROPIC_API_KEY="$AI_KEY" \
+  -e GEMINI_API_KEY="$GEMINI_KEY" \
+  -e GROQ_API_KEY="$GROQ_KEY" \
   -e CLAUDE_MODEL="claude-sonnet-5" \
   -e APP_SECRET="$APP_SECRET" \
   -e DB_FILE="/data/db.json" \
@@ -45,7 +49,7 @@ docker run -d --name sthir-ai --restart always \
   -v /opt/sthirmind-data:/data \
   -w /app \
   node:20-alpine node server.mjs
-if [ -n "$AI_KEY" ]; then echo "  ✅ AI Coach LIVE (key loaded)"; else echo "  ⚠️  AI key not set — coach replies with a placeholder. Add ANTHROPIC_API_KEY to .env"; fi
+if [ -n "$AI_KEY$GEMINI_KEY$GROQ_KEY" ]; then echo "  ✅ AI Coach LIVE (key loaded)"; else echo "  ⚠️  No AI key — coach uses offline wisdom replies. Add GEMINI_API_KEY (free) to .env"; fi
 
 # ── SSL cert ──────────────────────────────────────────────────
 echo "[3/5] SSL certificate..."
