@@ -301,9 +301,9 @@
 
 <nav>
   <button class="active" data-v="home" onclick="nav('home')"><span class="ic">🏠</span>Home</button>
-  <button data-v="coach" onclick="nav('coach')"><span class="ic">🤖</span>Coach</button>
-  <button data-v="grow" onclick="nav('grow')"><span class="ic">🌱</span>Grow</button>
   <button data-v="wisdom" onclick="nav('wisdom')"><span class="ic">📚</span>Wisdom</button>
+  <button data-v="grow" onclick="nav('grow')"><span class="ic">🌱</span>Grow</button>
+  <button data-v="coach" onclick="nav('coach')"><span class="ic">🤖</span>Coach</button>
   <button data-v="me" onclick="nav('me')"><span class="ic">👤</span>Me</button>
 </nav>
 
@@ -422,7 +422,35 @@ async function coachSend(){const inp=document.getElementById('coachIn');const q=
   const h=coachHist[activeAgent]=coachHist[activeAgent]||[];h.push({role:'user',content:q});renderCoachChat();
   const t=document.createElement('div');t.className='msg ai';t.innerHTML='<span class="typing"><i></i><i></i><i></i></span>';c.appendChild(t);c.scrollTop=c.scrollHeight;
   const reply=await askAI(h,'',activeAgent);h.push({role:'assistant',content:reply});renderCoachChat();}
-async function askAI(messages,book,agent){try{const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages,book,agent})});const d=await r.json();return d.reply||'I am here with you.';}catch(e){return 'I could not reach the coach just now. Please try again. 🙏';}}
+async function askAI(messages,book,agent){
+  try{const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages,book,agent})});
+    const d=await r.json();
+    if(d.reply && !/warming up/i.test(d.reply))return d.reply;
+  }catch(e){}
+  return localCoach(messages,agent,book);
+}
+// Offline wisdom-based coach — always responds, even without an API key
+function localCoach(messages,agent,book){
+  const q=(messages.filter(m=>m.role==='user').pop()||{}).content||'';
+  const ql=q.toLowerCase();
+  const wisdom={
+    life:'Marcus Aurelius reminds us: you have power over your mind, not outside events. Focus on what is yours to control — your effort and attitude.',
+    study:'James Clear teaches: you fall to the level of your systems. For focus, remove your phone from the room and start with just one 25-minute session.',
+    purpose:'Viktor Frankl found that those with a Why can bear almost any How. Name one meaningful reason behind your goal — let it pull you forward.',
+    heart:'Real connection heals. A 30-minute honest conversation with someone you trust can lift your whole week.',
+    mind:'Between stimulus and response there is a space. Take three slow breaths — 4 in, 4 hold, 4 out — and notice the calm return.',
+    health:'Your body is the foundation of a clear mind. Sleep, water, and a short walk today will do more than you expect.',
+  };
+  let open;
+  if(/stress|anxi|tension|pareshan|dukh|sad|low|udaas|depress/.test(ql))open='I hear you — that sounds heavy, and it takes courage to name it. 🙏 ';
+  else if(/exam|study|padh|focus|concentrat|distract/.test(ql))open='Studying can feel overwhelming, but you can do this one step at a time. ';
+  else if(/goal|dream|future|career|kya karu/.test(ql))open='Beautiful that you\'re thinking about your path. ';
+  else if(/thank|shukriya|great|good/.test(ql))open='I\'m glad this helps. 💛 ';
+  else open='Thank you for sharing that with me. ';
+  const w=wisdom[agent]||wisdom.life;
+  const step=['Try one small step today: '+['write down the single most important task and do only that','take 5 quiet minutes to breathe before you decide','send one honest message to someone you care about','do a 25-minute focus session with no phone','note 3 things that went right today'][Math.floor(Math.random()*5)]+'.'].join('');
+  return open+w+'\n\n'+step+(book?'\n\nAnd remember what '+book+' teaches — apply one idea from it this week.':'');
+}
 
 // ═══ GROW: check-in ═══
 function growTab(el,id){el.parentElement.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');document.querySelectorAll('#v-grow .tabpane').forEach(p=>p.classList.remove('active'));document.getElementById('g-'+id).classList.add('active');if(id==='goals')renderGoals();if(id==='journal')renderJournal();if(id==='focus')renderFocus();if(id==='checkin')renderCheckin();haptic();}
