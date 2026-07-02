@@ -52,6 +52,40 @@ const server = http.createServer(async (req, res) => {
   try {
     if (url === '/api/health') return send(res, 200, { ok: true, ai: !!API_KEY });
 
+    // ── Admin: user tracking ──
+    if (url === '/api/admin/users' && req.method === 'POST') {
+      const { password } = await body(req);
+      const ADMIN_PW = process.env.ADMIN_PASSWORD || 'hope2026';
+      if (password !== ADMIN_PW) return send(res, 401, { error: 'Wrong admin password' });
+      const users = Object.values(db.users).map((u) => {
+        const d = u.data || {};
+        const checkins = (d.checkins || []).length;
+        const lastCheckin = (d.checkins || []).slice(-1)[0]?.day || '—';
+        const focusMins = Object.values(d.focus || {}).reduce((a, f) => a + (f.mins || 0), 0);
+        return {
+          name: u.name, email: u.email, phone: u.phone,
+          joined: new Date(u.created).toISOString().slice(0, 10),
+          lastSeen: u.lastSeen ? new Date(u.lastSeen).toISOString().slice(0, 10) : '—',
+          streak: d.streak || 0, happiness: d.happiness || 0,
+          checkins, lastCheckin,
+          journalEntries: (d.journal || []).length,
+          focusMins, goals: (d.goals || []).length,
+          booksRead: Object.values(d.progress || {}).filter((p) => p >= 100).length,
+          bookmarks: (d.bookmarks || []).length,
+          moods: (d.moods || []).length,
+        };
+      }).sort((a, b) => (b.lastSeen > a.lastSeen ? 1 : -1));
+      const totals = {
+        totalUsers: users.length,
+        activeToday: users.filter((u) => u.lastSeen === new Date().toISOString().slice(0, 10)).length,
+        totalCheckins: users.reduce((a, u) => a + u.checkins, 0),
+        totalJournal: users.reduce((a, u) => a + u.journalEntries, 0),
+        totalFocusMins: users.reduce((a, u) => a + u.focusMins, 0),
+        avgHappiness: users.length ? Math.round(users.reduce((a, u) => a + u.happiness, 0) / users.length) : 0,
+      };
+      return send(res, 200, { totals, users });
+    }
+
     // ── Signup ──
     if (url === '/api/signup' && req.method === 'POST') {
       const { name, email, phone, password } = await body(req);
@@ -83,7 +117,7 @@ const server = http.createServer(async (req, res) => {
     if (url === '/api/sync' && req.method === 'POST') {
       const uid = auth(); if (!uid || !db.users[uid]) return send(res, 401, { error: 'Not logged in' });
       const { data } = await body(req);
-      db.users[uid].data = data || {}; save(db);
+      db.users[uid].data = data || {}; db.users[uid].lastSeen = Date.now(); save(db);
       return send(res, 200, { ok: true });
     }
 

@@ -25,7 +25,9 @@ if [ -f "$APP_DIR/.env" ]; then
   AI_KEY=$(grep -E '^ANTHROPIC_API_KEY=' $APP_DIR/.env | cut -d= -f2- | tr -d '"' | tr -d "'")
   GEMINI_KEY=$(grep -E '^GEMINI_API_KEY=' $APP_DIR/.env | cut -d= -f2- | tr -d '"' | tr -d "'")
   GROQ_KEY=$(grep -E '^GROQ_API_KEY=' $APP_DIR/.env | cut -d= -f2- | tr -d '"' | tr -d "'")
+  ADMIN_PW=$(grep -E '^ADMIN_PASSWORD=' $APP_DIR/.env | cut -d= -f2- | tr -d '"' | tr -d "'")
 fi
+[ -z "$ADMIN_PW" ] && ADMIN_PW="hope2026"
 [ "$AI_KEY" = "sk-ant-REPLACE_ME" ] && AI_KEY=""
 
 # Stop old containers, free ports
@@ -43,6 +45,7 @@ docker run -d --name sthir-ai --restart always \
   -e GEMINI_API_KEY="$GEMINI_KEY" \
   -e GROQ_API_KEY="$GROQ_KEY" \
   -e CLAUDE_MODEL="claude-sonnet-5" \
+  -e ADMIN_PASSWORD="$ADMIN_PW" \
   -e APP_SECRET="$APP_SECRET" \
   -e DB_FILE="/data/db.json" \
   -v $WEB_ROOT/server.mjs:/app/server.mjs:ro \
