@@ -109,9 +109,9 @@ const server = http.createServer(async (req, res) => {
 
       if (!reply && GEMINI_KEY) {
         try {
-          const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + GEMINI_KEY, {
+          const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent', {
             method: 'POST',
-            headers: { 'content-type': 'application/json' },
+            headers: { 'content-type': 'application/json', 'x-goog-api-key': GEMINI_KEY },
             body: JSON.stringify({
               system_instruction: { parts: [{ text: sys }] },
               contents: hist.map((m) => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] })),
