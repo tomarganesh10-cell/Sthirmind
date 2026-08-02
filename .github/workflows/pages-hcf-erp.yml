@@ -1,0 +1,60 @@
+name: Deploy HCF ERP to GitHub Pages
+
+# Publishes the static site in hcf-erp/ to GitHub Pages, served at the
+# custom domain team.hopecommonersfoundation.com (see hcf-erp/CNAME).
+#
+# One-time setup (repo owner):
+#   1. Repo → Settings → Pages → Build and deployment → Source: "GitHub Actions".
+#   2. Repo → Settings → Pages → Custom domain: team.hopecommonersfoundation.com
+#   3. At your DNS provider add a CNAME record:
+#        team  →  tomarganesh10-cell.github.io
+#   Then re-run this workflow (Actions tab → this workflow → Run workflow).
+
+on:
+  push:
+    branches:
+      - claude/hcf-erp-platform-setup-dfsmou
+      - claude/wizardly-ptolemy-2oksgp
+      - main
+    paths:
+      - 'hcf-erp/**'
+      - '.github/workflows/pages-hcf-erp.yml'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow one concurrent deployment; newer runs cancel in-progress ones.
+concurrency:
+  group: pages-hcf-erp
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Upload site artifact (hcf-erp/)
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: hcf-erp
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
