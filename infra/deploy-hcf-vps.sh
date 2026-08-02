@@ -56,8 +56,10 @@ ok "Files downloaded"
 MODE="standalone"
 if command -v docker >/dev/null && docker ps --format '{{.Names}}' 2>/dev/null | grep -q '^sthirmind-nginx$'; then
   MODE="integrated"
+elif ss -ltnpH 2>/dev/null | grep -E ':(80|443)\b' | grep -q 'nginx'; then
+  MODE="host"          # a system (host) nginx already serves 80/443
 elif ss -ltnH 2>/dev/null | awk '{print $4}' | grep -qE '(:80|:443)$'; then
-  MODE="conflict"
+  MODE="conflict"      # something else (apache, etc.) holds the ports
 fi
 blue "Deployment mode: $MODE"
 
@@ -126,28 +128,38 @@ EOF
   ok "HTTPS live (integrated with sthirmind-nginx)"
 
 # ═════════════════════════════════════════════════════════════════════
-# CONFLICT — 80/443 busy but not sthirmind-nginx
+# CONFLICT — 80/443 busy by something that is NOT nginx (e.g. apache)
 # ═════════════════════════════════════════════════════════════════════
 elif [ "$MODE" = "conflict" ]; then
-  warn "Ports 80/443 are in use by another service (not sthirmind-nginx):"
+  warn "Ports 80/443 are held by a non-nginx service:"
   ss -ltnp 2>/dev/null | grep -E ':(80|443)\b' || true
-  die "Tell me what this service is (apache? another docker?) and I'll adapt the script."
+  die "Tell me what this service is (apache? another proxy?) and I'll adapt the script."
 
 # ═════════════════════════════════════════════════════════════════════
-# STANDALONE — fresh VPS: install host nginx + certbot
+# HOST / STANDALONE — system nginx (adds a new site, keeps existing ones)
+#   host       : nginx already running & serving other sites → reload only
+#   standalone : fresh VPS → install nginx first
 # ═════════════════════════════════════════════════════════════════════
 else
-  blue "Installing nginx + certbot…"
   export DEBIAN_FRONTEND=noninteractive
-  apt-get update -q
-  apt-get install -y -q nginx certbot python3-certbot-nginx >/dev/null
-  ok "Packages ready"
+  if [ "$MODE" = "standalone" ]; then
+    blue "Installing nginx + certbot…"
+    apt-get update -q
+    apt-get install -y -q nginx certbot python3-certbot-nginx >/dev/null
+  else
+    blue "Using existing host nginx (your current sites stay untouched)…"
+    command -v certbot >/dev/null || { apt-get update -q; apt-get install -y -q certbot python3-certbot-nginx >/dev/null; }
+  fi
+  ok "nginx + certbot ready"
 
   blue "Publishing site to $WEBROOT"
   rm -rf "$WEBROOT"; mkdir -p "$WEBROOT"; cp -r "$SRC/." "$WEBROOT/"
   chown -R www-data:www-data "$WEBROOT" 2>/dev/null || true
 
-  cat > /etc/nginx/sites-available/hcf-team.conf <<'EOF'
+  # Use conf.d (included by Ubuntu's default nginx.conf) — additive & safe.
+  mkdir -p /etc/nginx/conf.d
+  cat > /etc/nginx/conf.d/hcf-team.conf <<'EOF'
+# HCF ERP — team subdomain (static site). Added by deploy-hcf-vps.sh.
 server {
   listen 80;
   listen [::]:80;
@@ -160,11 +172,11 @@ server {
   location ~* \.(?:css|js|jpe?g|png|gif|svg|webp|ico|woff2?)$ { expires 30d; add_header Cache-Control "public"; }
 }
 EOF
-  ln -sf /etc/nginx/sites-available/hcf-team.conf /etc/nginx/sites-enabled/hcf-team.conf
-  nginx -t || die "nginx config test failed."
+
+  nginx -t || die "nginx config test failed — your existing sites were NOT touched."
   systemctl enable nginx >/dev/null 2>&1 || true
-  systemctl restart nginx
-  ok "Site live on HTTP"
+  systemctl reload nginx 2>/dev/null || systemctl restart nginx
+  ok "Site live on HTTP (existing sites unaffected)"
 
   # Firewall (if ufw is active)
   if command -v ufw >/dev/null && ufw status 2>/dev/null | grep -q "Status: active"; then
@@ -176,7 +188,8 @@ EOF
   certbot --nginx --non-interactive --agree-tos --redirect \
     -m "$EMAIL" -d "$DOMAIN" \
     || die "Cert failed. Ensure 'team → ${SERVER_IP}' DNS has propagated, then re-run."
-  ok "HTTPS live (standalone nginx)"
+  systemctl reload nginx 2>/dev/null || true
+  ok "HTTPS live (host nginx)"
 fi
 
 echo
