@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0B3D2E" />
+  <title>Report Submitted | Hope Commoners Foundation</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .success-wrap { min-height: 100vh; display: grid; place-items: center; padding: 40px 16px; }
+    .success-card { width: min(560px, 96vw); padding: 46px 38px; text-align: center; }
+    .check-badge { width: 96px; height: 96px; margin: 0 auto 22px; border-radius: 50%;
+      display: grid; place-items: center; font-size: 44px; color: #fff;
+      background: linear-gradient(135deg, var(--success), #14664c);
+      box-shadow: 0 18px 40px -12px rgba(31,157,99,.6); animation: popIn .6s var(--ease); }
+    @keyframes popIn { 0% { transform: scale(0); } 70% { transform: scale(1.12); } 100% { transform: scale(1); } }
+    .check-badge i { animation: draw .5s .25s var(--ease) both; }
+    @keyframes draw { from { opacity: 0; transform: scale(.4); } to { opacity: 1; transform: scale(1); } }
+    .success-card h1 { color: var(--primary); font-size: 1.9rem; margin-bottom: 8px; }
+    .success-card p.lead-txt { color: var(--muted); font-size: 1rem; margin-bottom: 24px; }
+    .summary { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 8px 0 26px; text-align: left; }
+    .summary .cell { background: rgba(255,255,255,.6); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
+    .summary .cell small { color: var(--muted); font-size: .74rem; display: block; }
+    .summary .cell strong { color: var(--primary); font-size: 1.02rem; }
+    .success-actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+    .ref-id { font-family: monospace; background: rgba(11,61,46,.06); padding: 3px 10px; border-radius: 8px;
+      color: var(--primary); font-size: .82rem; }
+    .confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 60; }
+    .confetti i { position: absolute; top: -20px; width: 9px; height: 14px; opacity: .9;
+      animation: fall linear forwards; }
+    @keyframes fall { to { transform: translateY(110vh) rotate(540deg); opacity: 0; } }
+    @media (max-width:520px){ .summary { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="bg-canvas" aria-hidden="true">
+    <span class="blob blob-1"></span><span class="blob blob-2"></span><span class="blob blob-3"></span>
+    <div class="grid-overlay"></div>
+  </div>
+
+  <div class="confetti" id="confetti" aria-hidden="true"></div>
+
+  <div class="success-wrap">
+    <div class="glass success-card">
+      <div class="check-badge"><i class="fa-solid fa-check"></i></div>
+      <h1>Thank you<span id="nameLine"></span>! 🌱</h1>
+      <p class="lead-txt">Your activity report has been submitted successfully to Hope Commoners Foundation.
+        Our team has been notified and will review it shortly.</p>
+
+      <div class="summary">
+        <div class="cell"><small>Reference ID</small><strong><span class="ref-id" id="refId">—</span></strong></div>
+        <div class="cell"><small>Meals Reported</small><strong id="mealsCell">—</strong></div>
+      </div>
+
+      <div class="success-actions">
+        <a href="index.html" class="btn btn-gold btn-lg"><i class="fa-solid fa-plus me-2"></i>Submit Another</a>
+        <a href="../admin/dashboard.html" class="btn btn-outline-light btn-lg"><i class="fa-solid fa-gauge-high me-2"></i>Open Dashboard</a>
+      </div>
+
+      <p class="mt-4 mb-0" style="font-size:.82rem;color:var(--muted)">
+        <i class="fa-solid fa-envelope-circle-check" style="color:var(--secondary-600)"></i>
+        A confirmation summary was recorded. Keep serving with hope!
+      </p>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var data = {};
+      try { data = JSON.parse(sessionStorage.getItem('hcf_last_submit') || '{}'); } catch (e) {}
+      if (data.name) document.getElementById('nameLine').textContent = ', ' + String(data.name).split(' ')[0];
+      document.getElementById('refId').textContent = data.activityId || 'HCF-' + Date.now().toString(36).toUpperCase();
+      document.getElementById('mealsCell').textContent = (data.meals || '—') + (data.meals ? ' meals' : '');
+
+      // Confetti
+      var host = document.getElementById('confetti');
+      var colors = ['#0B3D2E', '#D4AF37', '#2f7a5f', '#f0d97a', '#1f9d63'];
+      for (var i = 0; i < 70; i++) {
+        var c = document.createElement('i');
+        c.style.left = Math.random() * 100 + 'vw';
+        c.style.background = colors[i % colors.length];
+        c.style.animationDuration = (2.5 + Math.random() * 2) + 's';
+        c.style.animationDelay = (Math.random() * 1.5) + 's';
+        c.style.transform = 'rotate(' + (Math.random() * 360) + 'deg)';
+        host.appendChild(c);
+      }
+      setTimeout(function () { host.innerHTML = ''; }, 6000);
+    })();
+  </script>
+</body>
+</html>

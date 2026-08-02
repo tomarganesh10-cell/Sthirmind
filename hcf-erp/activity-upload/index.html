@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Hope Commoners Foundation — Activity Upload Portal. Submit your chapter activity reports, meals served, expenses, bills and photos." />
+  <meta name="theme-color" content="#0B3D2E" />
+  <title>HCF Activity Upload Portal | Hope Commoners Foundation</title>
+
+  <!-- Google Fonts: Poppins -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+
+  <!-- AOS Animations -->
+  <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet" />
+
+  <!-- App styles -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ============================= ANIMATED BACKGROUND ============================= -->
+  <div class="bg-canvas" aria-hidden="true">
+    <span class="blob blob-1"></span>
+    <span class="blob blob-2"></span>
+    <span class="blob blob-3"></span>
+    <div class="grid-overlay"></div>
+  </div>
+
+  <!-- ============================= TOP NAV ============================= -->
+  <header class="app-header">
+    <div class="container-xl d-flex align-items-center justify-content-between">
+      <a class="brand" href="#top" aria-label="Hope Commoners Foundation home">
+        <span class="brand-logo" aria-hidden="true">
+          <i class="fa-solid fa-hands-holding-heart"></i>
+        </span>
+        <span class="brand-text">
+          <span class="brand-name">Hope Commoners</span>
+          <span class="brand-sub">Foundation</span>
+        </span>
+      </a>
+
+      <nav class="header-actions d-flex align-items-center gap-2">
+        <a class="btn-ghost d-none d-md-inline-flex" href="../admin/dashboard.html">
+          <i class="fa-solid fa-gauge-high me-2"></i>Admin Dashboard
+        </a>
+        <a class="btn-ghost" href="https://hopecommonersfoundation.com" target="_blank" rel="noopener">
+          <i class="fa-solid fa-globe me-2"></i><span class="d-none d-sm-inline">Website</span>
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <a id="top"></a>
+
+  <!-- ============================= HERO / LANDING ============================= -->
+  <section class="hero">
+    <div class="container-xl">
+      <div class="row align-items-center g-5">
+        <div class="col-lg-7" data-aos="fade-right">
+          <span class="pill">
+            <span class="pulse-dot"></span> Activity Upload Portal
+          </span>
+          <h1 class="hero-title">
+            Every meal served is a <span class="grad-text">story of hope</span>.
+          </h1>
+          <p class="hero-lead">
+            Welcome, volunteer. Log your chapter activity in minutes — meals served,
+            expenses, bills and photos — and help us measure the change we create together.
+          </p>
+          <div class="hero-cta">
+            <a href="#activity-form" class="btn btn-gold btn-lg">
+              <i class="fa-solid fa-cloud-arrow-up me-2"></i>Start Upload
+            </a>
+            <a href="#live-stats" class="btn btn-outline-light btn-lg">
+              <i class="fa-solid fa-chart-line me-2"></i>See Impact
+            </a>
+          </div>
+        </div>
+
+        <div class="col-lg-5" data-aos="fade-left" data-aos-delay="150">
+          <div class="glass hero-card">
+            <div class="hero-card-head">
+              <i class="fa-solid fa-seedling"></i>
+              <div>
+                <strong>Foundation Impact</strong>
+                <small>Updated live</small>
+              </div>
+            </div>
+            <div id="live-stats" class="stat-grid">
+              <div class="stat">
+                <span class="stat-num" data-count="0" data-target="0">0</span>
+                <span class="stat-label"><i class="fa-solid fa-bowl-food"></i> Meals Served</span>
+              </div>
+              <div class="stat">
+                <span class="stat-num" data-count="0" data-target="0">0</span>
+                <span class="stat-label"><i class="fa-solid fa-people-group"></i> Volunteers</span>
+              </div>
+              <div class="stat">
+                <span class="stat-num" data-count="0" data-target="0">0</span>
+                <span class="stat-label"><i class="fa-solid fa-calendar-check"></i> Activities</span>
+              </div>
+              <div class="stat">
+                <span class="stat-num" data-count="0" data-target="0">0</span>
+                <span class="stat-label"><i class="fa-solid fa-location-dot"></i> Chapters</span>
+              </div>
+            </div>
+            <div class="hero-card-foot">
+              <i class="fa-solid fa-shield-halved"></i> Your data is validated & stored securely
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="hero-wave" aria-hidden="true"></div>
+  </section>
+
+  <!-- ============================= MAIN FORM ============================= -->
+  <main class="container-xl form-shell">
+
+    <!-- Stepper -->
+    <div class="stepper glass" data-aos="fade-up">
+      <button type="button" class="step active" data-step="1"><span>1</span>Volunteer</button>
+      <button type="button" class="step" data-step="2"><span>2</span>Activity</button>
+      <button type="button" class="step" data-step="3"><span>3</span>Expenses</button>
+      <button type="button" class="step" data-step="4"><span>4</span>Uploads</button>
+      <button type="button" class="step" data-step="5"><span>5</span>Needs</button>
+      <div class="stepper-progress"><span id="stepperFill"></span></div>
+    </div>
+
+    <form id="activity-form" class="activity-form" novalidate autocomplete="on" enctype="multipart/form-data">
+
+      <!-- ===== STEP 1: VOLUNTEER INFORMATION ===== -->
+      <section class="form-step is-active" data-panel="1">
+        <div class="glass card-block" data-aos="fade-up">
+          <div class="block-head">
+            <span class="block-icon"><i class="fa-solid fa-id-badge"></i></span>
+            <div>
+              <h2>Volunteer Information</h2>
+              <p>Tell us who is reporting this activity.</p>
+            </div>
+          </div>
+
+          <div class="row g-4">
+            <div class="col-md-6">
+              <div class="float-field">
+                <input type="text" id="fullName" name="fullName" class="form-control" placeholder=" " required minlength="2" maxlength="80" />
+                <label for="fullName"><i class="fa-solid fa-user"></i> Full Name</label>
+                <div class="field-error">Please enter your full name.</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="float-field">
+                <input type="tel" id="phone" name="phone" class="form-control" placeholder=" " required inputmode="numeric" pattern="[0-9]{10}" maxlength="10" />
+                <label for="phone"><i class="fa-solid fa-phone"></i> Phone (10 digits)</label>
+                <div class="field-error">Enter a valid 10-digit phone number.</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="float-field">
+                <input type="email" id="email" name="email" class="form-control" placeholder=" " required maxlength="120" />
+                <label for="email"><i class="fa-solid fa-envelope"></i> Email Address</label>
+                <div class="field-error">Enter a valid email address.</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="float-field">
+                <select id="chapter" name="chapter" class="form-select" required>
+                  <option value="" selected disabled></option>
+                  <option value="Agra">Agra</option>
+                  <option value="Ghaziabad">Ghaziabad</option>
+                  <option value="Future">Future</option>
+                  <option value="Chandigarh">Chandigarh</option>
+                  <option value="Noida">Noida</option>
+                  <option value="Delhi">Delhi</option>
+                </select>
+                <label for="chapter"><i class="fa-solid fa-sitemap"></i> Chapter</label>
+                <div class="field-error">Please select your chapter.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="step-nav">
+            <span></span>
+            <button type="button" class="btn btn-primary-hcf next-step" data-goto="2">
+              Continue <i class="fa-solid fa-arrow-right ms-2"></i>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== STEP 2: ACTIVITY DETAILS ===== -->
+      <section class="form-step" data-panel="2">
+        <div class="glass card-block" data-aos="fade-up">
+          <div class="block-head">
+            <span class="block-icon"><i class="fa-solid fa-clipboard-list"></i></span>
+            <div>
+              <h2>Activity Details</h2>
+              <p>Describe what happened on the ground.</p>
+            </div>
+          </div>
+
+          <div class="row g-4">
+            <div class="col-md-4">
+              <div class="float-field">
+                <input type="date" id="activityDate" name="activityDate" class="form-control" placeholder=" " required />
+                <label for="activityDate" class="is-lifted"><i class="fa-solid fa-calendar-day"></i> Activity Date</label>
+                <div class="field-error">Select the activity date.</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="float-field">
+                <input type="time" id="activityTime" name="activityTime" class="form-control" placeholder=" " required />
+                <label for="activityTime" class="is-lifted"><i class="fa-solid fa-clock"></i> Time</label>
+                <div class="field-error">Select the time.</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="float-field">
+                <select id="activityName" name="activityName" class="form-select" required>
+                  <option value="" selected disabled></option>
+                  <option value="Poha">Poha</option>
+                  <option value="Rajma Chawal">Rajma Chawal</option>
+                  <option value="Veg Biryani">Veg Biryani</option>
+                  <option value="Kachori Sabji">Kachori Sabji</option>
+                  <option value="Khichdi">Khichdi</option>
+                  <option value="Food Distribution">Food Distribution</option>
+                  <option value="Other">Other</option>
+                </select>
+                <label for="activityName"><i class="fa-solid fa-utensils"></i> Activity Name</label>
+                <div class="field-error">Select an activity.</div>
+              </div>
+            </div>
+
+            <div class="col-md-12 activity-other d-none">
+              <div class="float-field">
+                <input type="text" id="activityOther" name="activityOther" class="form-control" placeholder=" " maxlength="80" />
+                <label for="activityOther"><i class="fa-solid fa-pen"></i> Please specify the activity</label>
+                <div class="field-error">Please specify the activity.</div>
+              </div>
+            </div>
+
+            <div class="col-md-8">
+              <div class="float-field">
+                <input type="url" id="location" name="location" class="form-control" placeholder=" " inputmode="url" />
+                <label for="location"><i class="fa-solid fa-map-location-dot"></i> Location (Google Maps Link)</label>
+                <div class="field-error">Enter a valid URL (https://...).</div>
+              </div>
+              <button type="button" id="geoBtn" class="mini-link">
+                <i class="fa-solid fa-location-crosshairs"></i> Use my current location
+              </button>
+            </div>
+            <div class="col-md-2 col-6">
+              <div class="float-field">
+                <input type="number" id="meals" name="meals" class="form-control" placeholder=" " required min="0" max="100000" step="1" />
+                <label for="meals"><i class="fa-solid fa-bowl-rice"></i> Meals</label>
+                <div class="field-error">Enter meals served.</div>
+              </div>
+            </div>
+            <div class="col-md-2 col-6">
+              <div class="float-field">
+                <input type="number" id="volunteers" name="volunteers" class="form-control" placeholder=" " required min="0" max="10000" step="1" />
+                <label for="volunteers"><i class="fa-solid fa-users"></i> Volunteers</label>
+                <div class="field-error">Enter count.</div>
+              </div>
+            </div>
+
+            <div class="col-12">
+              <div class="float-field">
+                <textarea id="description" name="description" class="form-control" placeholder=" " rows="4" maxlength="1500"></textarea>
+                <label for="description"><i class="fa-solid fa-align-left"></i> Activity Description</label>
+                <div class="char-counter"><span id="descCount">0</span>/1500</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="step-nav">
+            <button type="button" class="btn btn-ghost-dark prev-step" data-goto="1"><i class="fa-solid fa-arrow-left me-2"></i>Back</button>
+            <button type="button" class="btn btn-primary-hcf next-step" data-goto="3">Continue <i class="fa-solid fa-arrow-right ms-2"></i></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== STEP 3: EXPENSE MANAGEMENT ===== -->
+      <section class="form-step" data-panel="3">
+        <div class="glass card-block" data-aos="fade-up">
+          <div class="block-head">
+            <span class="block-icon"><i class="fa-solid fa-receipt"></i></span>
+            <div>
+              <h2>Expense Management</h2>
+              <p>Break down every rupee spent for full transparency.</p>
+            </div>
+          </div>
+
+          <div class="row g-4 mb-2">
+            <div class="col-md-6">
+              <div class="float-field">
+                <input type="number" id="amountRequested" name="amountRequested" class="form-control" placeholder=" " min="0" step="0.01" />
+                <label for="amountRequested"><i class="fa-solid fa-hand-holding-dollar"></i> Amount Requested (₹)</label>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="float-field">
+                <input type="number" id="actualExpense" name="actualExpense" class="form-control" placeholder=" " min="0" step="0.01" readonly />
+                <label for="actualExpense" class="is-lifted"><i class="fa-solid fa-coins"></i> Actual Expense (Auto ₹)</label>
+                <small class="field-hint">Calculated automatically from the table below.</small>
+              </div>
+            </div>
+          </div>
+
+          <div class="expense-wrap">
+            <table class="expense-table" id="expenseTable">
+              <thead>
+                <tr>
+                  <th style="width:52px">#</th>
+                  <th>Item / Description</th>
+                  <th style="width:180px">Amount (₹)</th>
+                  <th style="width:60px"></th>
+                </tr>
+              </thead>
+              <tbody id="expenseBody">
+                <!-- rows injected by JS -->
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="2" class="text-end fw-600">Total</td>
+                  <td class="expense-total">₹ <span id="expenseTotal">0.00</span></td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            </table>
+            <button type="button" id="addRow" class="btn btn-add-row">
+              <i class="fa-solid fa-plus me-2"></i>Add Expense Row
+            </button>
+          </div>
+
+          <div class="step-nav">
+            <button type="button" class="btn btn-ghost-dark prev-step" data-goto="2"><i class="fa-solid fa-arrow-left me-2"></i>Back</button>
+            <button type="button" class="btn btn-primary-hcf next-step" data-goto="4">Continue <i class="fa-solid fa-arrow-right ms-2"></i></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== STEP 4: UPLOADS (BILLS + PHOTOS) ===== -->
+      <section class="form-step" data-panel="4">
+        <div class="glass card-block" data-aos="fade-up">
+          <div class="block-head">
+            <span class="block-icon"><i class="fa-solid fa-cloud-arrow-up"></i></span>
+            <div>
+              <h2>Upload Bills &amp; Photos</h2>
+              <p>Attach proof of expenses and moments from the field.</p>
+            </div>
+          </div>
+
+          <!-- Bills -->
+          <h3 class="sub-title"><i class="fa-solid fa-file-invoice"></i> Bills <small>(Images &amp; PDF)</small></h3>
+          <div class="dropzone" id="billsDrop" tabindex="0" role="button" aria-label="Upload bills">
+            <input type="file" id="billsInput" accept="image/*,application/pdf" multiple hidden />
+            <div class="dz-inner">
+              <i class="fa-solid fa-file-arrow-up dz-icon"></i>
+              <p><strong>Drag &amp; drop</strong> bills here, or <span class="dz-browse">browse</span></p>
+              <small>JPG, PNG, WEBP or PDF • up to 10 MB each</small>
+            </div>
+          </div>
+          <div class="preview-grid" id="billsPreview"></div>
+
+          <!-- Photos -->
+          <h3 class="sub-title mt-4"><i class="fa-solid fa-images"></i> Activity Photos <small>(Max 30)</small></h3>
+          <div class="dropzone" id="photosDrop" tabindex="0" role="button" aria-label="Upload photos">
+            <input type="file" id="photosInput" accept="image/*" multiple hidden />
+            <div class="dz-inner">
+              <i class="fa-solid fa-camera-retro dz-icon"></i>
+              <p><strong>Drag &amp; drop</strong> photos here, or <span class="dz-browse">browse</span></p>
+              <small>Up to 30 images • auto-compressed for fast upload</small>
+            </div>
+          </div>
+          <div class="preview-counter"><span id="photoCount">0</span> / 30 photos selected</div>
+          <div class="preview-grid gallery" id="photosPreview"></div>
+
+          <div class="step-nav">
+            <button type="button" class="btn btn-ghost-dark prev-step" data-goto="3"><i class="fa-solid fa-arrow-left me-2"></i>Back</button>
+            <button type="button" class="btn btn-primary-hcf next-step" data-goto="5">Continue <i class="fa-solid fa-arrow-right ms-2"></i></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== STEP 5: REQUIREMENTS + SUBMIT ===== -->
+      <section class="form-step" data-panel="5">
+        <div class="glass card-block" data-aos="fade-up">
+          <div class="block-head">
+            <span class="block-icon"><i class="fa-solid fa-hands-helping"></i></span>
+            <div>
+              <h2>Requirements &amp; Support Needed</h2>
+              <p>Tell us how the foundation can support your chapter next.</p>
+            </div>
+          </div>
+
+          <div class="needs-grid">
+            <label class="need-card">
+              <input type="checkbox" name="needFunds" value="Yes" />
+              <span class="need-ic"><i class="fa-solid fa-sack-dollar"></i></span>
+              <span class="need-tx">Need Funds</span>
+              <i class="fa-solid fa-check need-check"></i>
+            </label>
+            <label class="need-card">
+              <input type="checkbox" name="needVolunteers" value="Yes" />
+              <span class="need-ic"><i class="fa-solid fa-user-plus"></i></span>
+              <span class="need-tx">Need Volunteers</span>
+              <i class="fa-solid fa-check need-check"></i>
+            </label>
+            <label class="need-card">
+              <input type="checkbox" name="needFood" value="Yes" />
+              <span class="need-ic"><i class="fa-solid fa-wheat-awn"></i></span>
+              <span class="need-tx">Need Food Material</span>
+              <i class="fa-solid fa-check need-check"></i>
+            </label>
+            <label class="need-card">
+              <input type="checkbox" name="needTransport" value="Yes" />
+              <span class="need-ic"><i class="fa-solid fa-truck"></i></span>
+              <span class="need-tx">Need Transportation</span>
+              <i class="fa-solid fa-check need-check"></i>
+            </label>
+            <label class="need-card">
+              <input type="checkbox" name="needSponsors" value="Yes" />
+              <span class="need-ic"><i class="fa-solid fa-handshake-angle"></i></span>
+              <span class="need-tx">Need Sponsors</span>
+              <i class="fa-solid fa-check need-check"></i>
+            </label>
+          </div>
+
+          <div class="float-field mt-4">
+            <textarea id="remarks" name="remarks" class="form-control" placeholder=" " rows="3" maxlength="800"></textarea>
+            <label for="remarks"><i class="fa-solid fa-comment-dots"></i> Additional Remarks (optional)</label>
+          </div>
+
+          <!-- Honeypot spam trap (hidden from users) -->
+          <div class="hp-field" aria-hidden="true">
+            <label for="website">Leave this empty</label>
+            <input type="text" id="website" name="website" tabindex="-1" autocomplete="off" />
+          </div>
+
+          <label class="consent">
+            <input type="checkbox" id="consent" required />
+            <span>I confirm the information provided is accurate and belongs to a genuine Hope Commoners Foundation activity.</span>
+          </label>
+
+          <div class="step-nav">
+            <button type="button" class="btn btn-ghost-dark prev-step" data-goto="4"><i class="fa-solid fa-arrow-left me-2"></i>Back</button>
+            <button type="submit" id="submitBtn" class="btn btn-gold btn-lg btn-submit">
+              <i class="fa-solid fa-paper-plane me-2"></i>Submit Activity Report
+            </button>
+          </div>
+        </div>
+      </section>
+
+    </form>
+  </main>
+
+  <!-- ============================= FOOTER ============================= -->
+  <footer class="app-footer">
+    <div class="container-xl">
+      <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <div class="d-flex align-items-center gap-2">
+          <span class="brand-logo sm"><i class="fa-solid fa-hands-holding-heart"></i></span>
+          <div>
+            <strong>Hope Commoners Foundation</strong>
+            <small class="d-block">Activity Management System</small>
+          </div>
+        </div>
+        <div class="foot-links">
+          <a href="https://hopecommonersfoundation.com" target="_blank" rel="noopener">Website</a>
+          <a href="../admin/dashboard.html">Admin</a>
+          <span>© <span id="year"></span> HCF</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ============================= SUBMIT OVERLAY ============================= -->
+  <div class="submit-overlay" id="submitOverlay" aria-hidden="true">
+    <div class="submit-card glass">
+      <div class="loader-ring"><span></span><span></span><span></span></div>
+      <h3 id="overlayTitle">Uploading your report…</h3>
+      <p id="overlayMsg">Please keep this window open. We're saving your activity securely.</p>
+      <div class="upload-progress"><span id="uploadFill"></span></div>
+      <div class="upload-pct"><span id="uploadPct">0</span>%</div>
+    </div>
+  </div>
+
+  <!-- ============================= TOAST HOST ============================= -->
+  <div class="toast-host" id="toastHost" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+  <script src="config.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0B3D2E" />
+  <title>Admin Dashboard | HCF Activity Management System</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet" />
+  <link rel="stylesheet" href="dashboard.css" />
+</head>
+<body>
+
+  <!-- ===================== LOGIN GATE ===================== -->
+  <div class="login-screen" id="loginScreen">
+    <div class="login-bg" aria-hidden="true"><span></span><span></span><span></span></div>
+    <div class="glass login-card">
+      <div class="login-brand">
+        <span class="brand-logo"><i class="fa-solid fa-hands-holding-heart"></i></span>
+        <div>
+          <h1>HCF Admin</h1>
+          <p>Activity Management System</p>
+        </div>
+      </div>
+      <form id="loginForm" autocomplete="off">
+        <div class="lf">
+          <i class="fa-solid fa-user"></i>
+          <input type="text" id="loginUser" placeholder="Username" required />
+        </div>
+        <div class="lf">
+          <i class="fa-solid fa-lock"></i>
+          <input type="password" id="loginPass" placeholder="Password" required />
+          <button type="button" class="toggle-pass" id="togglePass" aria-label="Show password"><i class="fa-solid fa-eye"></i></button>
+        </div>
+        <div class="login-error" id="loginError"><i class="fa-solid fa-triangle-exclamation"></i> Invalid credentials. Try again.</div>
+        <button type="submit" class="btn btn-gold w-100 btn-lg mt-2"><i class="fa-solid fa-right-to-bracket me-2"></i>Sign In</button>
+      </form>
+      <p class="login-hint">Default: <code>admin</code> / <code>hcf@2026</code> — change in <code>dashboard.js</code>.</p>
+    </div>
+  </div>
+
+  <!-- ===================== APP SHELL ===================== -->
+  <div class="app-shell d-none" id="appShell">
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="side-brand">
+        <span class="brand-logo"><i class="fa-solid fa-hands-holding-heart"></i></span>
+        <div class="side-brand-tx">
+          <strong>Hope Commoners</strong>
+          <small>Admin Console</small>
+        </div>
+      </div>
+      <nav class="side-nav">
+        <a class="side-link active" data-view="overview"><i class="fa-solid fa-gauge-high"></i> Overview</a>
+        <a class="side-link" data-view="activities"><i class="fa-solid fa-list-check"></i> Activities</a>
+        <a class="side-link" data-view="analytics"><i class="fa-solid fa-chart-pie"></i> Analytics</a>
+        <a class="side-link" data-view="reports"><i class="fa-solid fa-file-export"></i> Reports</a>
+      </nav>
+      <div class="side-foot">
+        <a href="../activity-upload/index.html" class="side-link"><i class="fa-solid fa-cloud-arrow-up"></i> Upload Portal</a>
+        <a class="side-link text-danger" id="logoutBtn"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <div class="main-area">
+      <!-- Topbar -->
+      <header class="topbar glass">
+        <button class="hamburger" id="hamburger" aria-label="Toggle menu"><i class="fa-solid fa-bars"></i></button>
+        <div class="topbar-title">
+          <h2 id="viewTitle">Overview</h2>
+          <small id="viewSub">Live snapshot of foundation activity</small>
+        </div>
+        <div class="topbar-actions">
+          <button class="icon-btn" id="refreshBtn" aria-label="Refresh"><i class="fa-solid fa-rotate"></i></button>
+          <span class="admin-chip"><i class="fa-solid fa-user-shield"></i> <span id="adminName">Admin</span></span>
+        </div>
+      </header>
+
+      <main class="content" id="content">
+
+        <!-- ===== OVERVIEW VIEW ===== -->
+        <section class="view is-active" data-view="overview">
+          <div class="kpi-grid" id="kpiGrid">
+            <div class="glass kpi" data-aos="fade-up">
+              <div class="kpi-ic green"><i class="fa-solid fa-bowl-food"></i></div>
+              <div class="kpi-body"><small>Today's Meals</small><strong data-kpi="todayMeals">0</strong></div>
+            </div>
+            <div class="glass kpi" data-aos="fade-up" data-aos-delay="60">
+              <div class="kpi-ic gold"><i class="fa-solid fa-calendar-days"></i></div>
+              <div class="kpi-body"><small>Monthly Meals</small><strong data-kpi="monthMeals">0</strong></div>
+            </div>
+            <div class="glass kpi" data-aos="fade-up" data-aos-delay="120">
+              <div class="kpi-ic teal"><i class="fa-solid fa-indian-rupee-sign"></i></div>
+              <div class="kpi-body"><small>Total Expenses</small><strong data-kpi="expenses" data-money="1">₹0</strong></div>
+            </div>
+            <div class="glass kpi" data-aos="fade-up" data-aos-delay="180">
+              <div class="kpi-ic amber"><i class="fa-solid fa-hourglass-half"></i></div>
+              <div class="kpi-body"><small>Pending Reports</small><strong data-kpi="pending">0</strong></div>
+            </div>
+            <div class="glass kpi" data-aos="fade-up" data-aos-delay="240">
+              <div class="kpi-ic green"><i class="fa-solid fa-circle-check"></i></div>
+              <div class="kpi-body"><small>Approved Reports</small><strong data-kpi="approved">0</strong></div>
+            </div>
+            <div class="glass kpi" data-aos="fade-up" data-aos-delay="300">
+              <div class="kpi-ic teal"><i class="fa-solid fa-people-group"></i></div>
+              <div class="kpi-body"><small>Total Volunteers</small><strong data-kpi="volunteers">0</strong></div>
+            </div>
+          </div>
+
+          <div class="row g-4 mt-1">
+            <div class="col-lg-7" data-aos="fade-up">
+              <div class="glass panel">
+                <div class="panel-head"><h3><i class="fa-solid fa-chart-column"></i> Meals by Chapter</h3></div>
+                <div class="chart-box"><canvas id="barChart" height="150"></canvas></div>
+              </div>
+            </div>
+            <div class="col-lg-5" data-aos="fade-up" data-aos-delay="80">
+              <div class="glass panel">
+                <div class="panel-head"><h3><i class="fa-solid fa-chart-pie"></i> Status Split</h3></div>
+                <div class="chart-box"><canvas id="pieChart" height="150"></canvas></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="glass panel mt-4" data-aos="fade-up">
+            <div class="panel-head">
+              <h3><i class="fa-solid fa-clock-rotate-left"></i> Recent Activity</h3>
+              <a class="mini-link" data-jump="activities">View all <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
+            <div id="recentList" class="recent-list"></div>
+          </div>
+        </section>
+
+        <!-- ===== ACTIVITIES VIEW ===== -->
+        <section class="view" data-view="activities">
+          <div class="glass toolbar">
+            <div class="search-box">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input type="search" id="searchInput" placeholder="Search volunteer, activity, ID, phone…" />
+            </div>
+            <select id="filterChapter" class="filter-select">
+              <option value="">All Chapters</option>
+              <option>Agra</option><option>Ghaziabad</option><option>Future</option>
+              <option>Chandigarh</option><option>Noida</option><option>Delhi</option>
+            </select>
+            <select id="filterStatus" class="filter-select">
+              <option value="">All Status</option>
+              <option>Pending</option><option>Approved</option><option>Rejected</option>
+            </select>
+            <div class="toolbar-spacer"></div>
+            <button class="btn btn-ghost-dark" id="exportCsv"><i class="fa-solid fa-file-csv me-2"></i>Excel</button>
+            <button class="btn btn-ghost-dark" id="exportPdf"><i class="fa-solid fa-file-pdf me-2"></i>PDF</button>
+          </div>
+
+          <div class="glass table-wrap">
+            <table class="data-table" id="dataTable">
+              <thead>
+                <tr>
+                  <th>Date</th><th>Volunteer</th><th>Chapter</th><th>Activity</th>
+                  <th class="text-end">Meals</th><th class="text-end">Expense</th>
+                  <th>Status</th><th class="text-center">Files</th><th class="text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody id="tableBody"><!-- rows --></tbody>
+            </table>
+            <div class="empty-state d-none" id="emptyState">
+              <i class="fa-solid fa-inbox"></i>
+              <p>No activities found for the current filters.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== ANALYTICS VIEW ===== -->
+        <section class="view" data-view="analytics">
+          <div class="row g-4">
+            <div class="col-lg-6" data-aos="fade-up">
+              <div class="glass panel">
+                <div class="panel-head"><h3><i class="fa-solid fa-chart-column"></i> Meals by Chapter</h3></div>
+                <div class="chart-box"><canvas id="barChart2" height="180"></canvas></div>
+              </div>
+            </div>
+            <div class="col-lg-6" data-aos="fade-up" data-aos-delay="80">
+              <div class="glass panel">
+                <div class="panel-head"><h3><i class="fa-solid fa-chart-pie"></i> Expense by Chapter</h3></div>
+                <div class="chart-box"><canvas id="pieChart2" height="180"></canvas></div>
+              </div>
+            </div>
+            <div class="col-12" data-aos="fade-up">
+              <div class="glass panel">
+                <div class="panel-head"><h3><i class="fa-solid fa-table-cells-large"></i> Chapter-wise Report</h3></div>
+                <div class="table-responsive">
+                  <table class="data-table">
+                    <thead><tr><th>Chapter</th><th class="text-end">Activities</th><th class="text-end">Meals</th><th class="text-end">Volunteers</th><th class="text-end">Expense</th></tr></thead>
+                    <tbody id="chapterReport"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== REPORTS VIEW ===== -->
+        <section class="view" data-view="reports">
+          <div class="glass panel" data-aos="fade-up">
+            <div class="panel-head"><h3><i class="fa-solid fa-file-export"></i> Export &amp; Reports</h3></div>
+            <p class="text-muted">Generate downloadable reports from the current activity dataset.</p>
+            <div class="export-grid">
+              <button class="export-card" id="repCsv"><i class="fa-solid fa-file-csv"></i><span>Full Data (Excel/CSV)</span><small>All columns, all rows</small></button>
+              <button class="export-card" id="repPdf"><i class="fa-solid fa-file-pdf"></i><span>Summary Report (PDF)</span><small>Printable overview + totals</small></button>
+              <button class="export-card" id="repChapterPdf"><i class="fa-solid fa-map-location-dot"></i><span>Chapter Report (PDF)</span><small>Chapter-wise breakdown</small></button>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ===================== DETAIL MODAL ===================== -->
+  <div class="modal-backdrop-hcf" id="detailModal" aria-hidden="true">
+    <div class="glass detail-card" role="dialog" aria-modal="true">
+      <button class="modal-close" id="modalClose" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+      <div id="detailBody"><!-- injected --></div>
+    </div>
+  </div>
+
+  <!-- Toasts -->
+  <div class="toast-host" id="toastHost"></div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+  <script src="../activity-upload/config.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>
