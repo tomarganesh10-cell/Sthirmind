@@ -157,7 +157,7 @@
   nav button.active{color:var(--gold)}nav button.active .ic{transform:scale(1.15)}
   .toast{position:fixed;bottom:calc(88px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:var(--surface2);color:var(--txt);padding:11px 20px;border-radius:22px;font-size:13px;font-weight:600;z-index:210;opacity:0;transition:.3s;border:1px solid var(--border);pointer-events:none;white-space:nowrap}
   .toast.show{opacity:1}
-  .install{position:fixed;bottom:calc(84px + env(safe-area-inset-bottom));left:14px;right:14px;max-width:612px;margin:0 auto;background:var(--gold);color:#0D1B2A;border-radius:14px;padding:12px 16px;display:none;align-items:center;gap:12px;z-index:60;box-shadow:0 8px 30px rgba(0,0,0,.4)}
+  .install{position:fixed;bottom:calc(84px + env(safe-area-inset-bottom));left:14px;right:14px;max-width:612px;margin:0 auto;background:var(--gold);color:#0D1B2A;border-radius:14px;padding:12px 16px;display:none;align-items:center;gap:12px;z-index:250;box-shadow:0 8px 30px rgba(0,0,0,.4)}
   .install.show{display:flex}.install b{font-size:14px}.install small{font-size:12px;opacity:.8}
   .install button{margin-left:auto;background:#0D1B2A;color:var(--gold);border:none;padding:9px 15px;border-radius:9px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap}.install .x{background:none;color:#0D1B2A;padding:4px 8px;font-size:18px}
   .chart-wrap{position:relative;height:220px}
@@ -181,6 +181,10 @@
     <button class="btn" id="authBtn" onclick="doAuth()">Create Account →</button>
     <div class="switch" id="authSwitch">Already have an account? <b onclick="toggleAuth()">Log in</b></div>
     <div class="skip" onclick="skipAuth()">Continue as guest (data stays on this device)</div>
+    <div id="authInstall" style="display:none;text-align:center;margin-top:22px;padding-top:18px;border-top:1px solid var(--border)">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">📱 Get it as an app on your phone</div>
+      <button class="btn" style="background:var(--surface);color:var(--gold);border:1px solid var(--border);width:auto;padding:11px 22px;font-size:14px" onclick="doInstall()">⬇ Install SthirMind</button>
+    </div>
   </div>
 </div>
 
@@ -535,10 +539,10 @@ function nav(v){if('speechSynthesis'in window)speechSynthesis.cancel();stopAudio
 
 // ═══ INSTALL ═══
 let deferredPrompt=null;
-window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;if(!window.matchMedia('(display-mode: standalone)').matches)setTimeout(()=>document.getElementById('install').classList.add('show'),4000);});
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;if(!window.matchMedia('(display-mode: standalone)').matches)setTimeout(()=>document.getElementById('install').classList.add('show'),1200);document.getElementById('authInstall').style.display='block';});
 function doInstall(){document.getElementById('install').classList.remove('show');if(deferredPrompt){deferredPrompt.prompt();deferredPrompt=null;}}
 const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent),isStd=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone;
-if(isIOS&&!isStd){setTimeout(()=>{const el=document.getElementById('install');el.querySelector('div').innerHTML='<b>Install SthirMind</b><br><small>Tap Share ⬆ then "Add to Home Screen"</small>';el.querySelector('button').style.display='none';el.classList.add('show');},4500);}
+if(isIOS&&!isStd){setTimeout(()=>{const el=document.getElementById('install');el.querySelector('div').innerHTML='<b>Install SthirMind</b><br><small>Tap Share ⬆ then "Add to Home Screen"</small>';el.querySelector('button').style.display='none';el.classList.add('show');},1500);}
 
 // ═══ BOOT ═══
 function bootUI(){refreshStreak();renderHome();if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});}
