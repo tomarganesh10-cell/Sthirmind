@@ -21,7 +21,7 @@
     <div class="login-bg" aria-hidden="true"><span></span><span></span><span></span></div>
     <div class="glass login-card">
       <div class="login-brand">
-        <span class="brand-logo"><i class="fa-solid fa-hands-holding-heart"></i></span>
+        <span class="brand-logo"><img src="../assets/logo.png" alt="HCF" onerror="this.remove()"><i class="fa-solid fa-hands-holding-heart"></i></span>
         <div>
           <h1>HCF Admin</h1>
           <p>Activity Management System</p>
@@ -50,7 +50,7 @@
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
       <div class="side-brand">
-        <span class="brand-logo"><i class="fa-solid fa-hands-holding-heart"></i></span>
+        <span class="brand-logo"><img src="../assets/logo.png" alt="HCF" onerror="this.remove()"><i class="fa-solid fa-hands-holding-heart"></i></span>
         <div class="side-brand-tx">
           <strong>Hope Commoners</strong>
           <small>Admin Console</small>
@@ -59,6 +59,7 @@
       <nav class="side-nav">
         <a class="side-link active" data-view="overview"><i class="fa-solid fa-gauge-high"></i> Overview</a>
         <a class="side-link" data-view="activities"><i class="fa-solid fa-list-check"></i> Activities</a>
+        <a class="side-link" data-view="volunteers"><i class="fa-solid fa-user-check"></i> Volunteers <span class="nav-badge" id="volPendingBadge"></span></a>
         <a class="side-link" data-view="analytics"><i class="fa-solid fa-chart-pie"></i> Analytics</a>
         <a class="side-link" data-view="reports"><i class="fa-solid fa-file-export"></i> Reports</a>
       </nav>
@@ -215,6 +216,40 @@
               <button class="export-card" id="repCsv"><i class="fa-solid fa-file-csv"></i><span>Full Data (Excel/CSV)</span><small>All columns, all rows</small></button>
               <button class="export-card" id="repPdf"><i class="fa-solid fa-file-pdf"></i><span>Summary Report (PDF)</span><small>Printable overview + totals</small></button>
               <button class="export-card" id="repChapterPdf"><i class="fa-solid fa-map-location-dot"></i><span>Chapter Report (PDF)</span><small>Chapter-wise breakdown</small></button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== VOLUNTEERS VIEW ===== -->
+        <section class="view" data-view="volunteers">
+          <div class="glass toolbar">
+            <div class="search-box">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input type="search" id="volSearch" placeholder="Search name, email, phone…" />
+            </div>
+            <select id="volFilterStatus" class="filter-select">
+              <option value="">All Status</option>
+              <option>Pending</option><option>Approved</option><option>Rejected</option>
+            </select>
+            <select id="volFilterChapter" class="filter-select">
+              <option value="">All Chapters</option>
+              <option>Agra</option><option>Ghaziabad</option><option>Future</option>
+              <option>Chandigarh</option><option>Noida</option><option>Delhi</option>
+            </select>
+            <div class="toolbar-spacer"></div>
+            <button class="btn btn-ghost-dark" id="volRefresh"><i class="fa-solid fa-rotate me-2"></i>Refresh</button>
+          </div>
+
+          <div class="glass table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr><th>Joined</th><th>Name</th><th>Email</th><th>Phone</th><th>Chapter</th><th>Status</th><th class="text-center">Action</th></tr>
+              </thead>
+              <tbody id="volBody"></tbody>
+            </table>
+            <div class="empty-state d-none" id="volEmpty">
+              <i class="fa-solid fa-user-slash"></i>
+              <p>No volunteer signups yet.</p>
             </div>
           </div>
         </section>

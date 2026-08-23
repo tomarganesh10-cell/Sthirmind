@@ -38,7 +38,8 @@
   <header class="app-header">
     <div class="container-xl d-flex align-items-center justify-content-between">
       <a class="brand" href="#top" aria-label="Hope Commoners Foundation home">
-        <span class="brand-logo" aria-hidden="true">
+        <span class="brand-logo">
+          <img src="../assets/logo.png" alt="HCF" onerror="this.remove()" />
           <i class="fa-solid fa-hands-holding-heart"></i>
         </span>
         <span class="brand-text">
@@ -48,12 +49,13 @@
       </a>
 
       <nav class="header-actions d-flex align-items-center gap-2">
+        <span class="vol-chip" id="volChip"><i class="fa-solid fa-user-check me-2"></i><span id="volName">Volunteer</span></span>
         <a class="btn-ghost d-none d-md-inline-flex" href="../admin/dashboard.html">
           <i class="fa-solid fa-gauge-high me-2"></i>Admin Dashboard
         </a>
-        <a class="btn-ghost" href="https://hopecommonersfoundation.com" target="_blank" rel="noopener">
-          <i class="fa-solid fa-globe me-2"></i><span class="d-none d-sm-inline">Website</span>
-        </a>
+        <button type="button" class="btn-ghost" id="logoutBtn">
+          <i class="fa-solid fa-right-from-bracket me-2"></i><span class="d-none d-sm-inline">Logout</span>
+        </button>
       </nav>
     </div>
   </header>
@@ -503,6 +505,22 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
   <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    // Gate the portal: only logged-in (approved) volunteers may upload.
+    (function () {
+      var u = window.HCFAuth ? HCFAuth.requireLogin() : null;
+      if (!u) return; // requireLogin redirects to login.html
+      document.addEventListener('DOMContentLoaded', function () {
+        var nameEl = document.getElementById('volName'); if (nameEl) nameEl.textContent = (u.name || 'Volunteer').split(' ')[0];
+        var logout = document.getElementById('logoutBtn'); if (logout) logout.onclick = function () { HCFAuth.logout(); };
+        // Prefill Step 1 with the volunteer's own details
+        var set = function (id, v) { var el = document.getElementById(id); if (el && !el.value && v) el.value = v; };
+        set('fullName', u.name); set('phone', u.phone); set('email', u.email);
+        var ch = document.getElementById('chapter'); if (ch && u.chapter) ch.value = u.chapter;
+      });
+    })();
+  </script>
   <script src="script.js"></script>
 </body>
 </html>

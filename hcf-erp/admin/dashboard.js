@@ -74,13 +74,16 @@
     initToolbar();
     initModal();
     initExports();
+    initVolunteers();
     loadData();
+    loadVolunteers(); // populate pending badge
   }
 
   /* ---------------- Navigation ---------------- */
   const TITLES = {
     overview: ['Overview', 'Live snapshot of foundation activity'],
     activities: ['Activities', 'Review, approve and manage submissions'],
+    volunteers: ['Volunteers', 'Approve or reject volunteer sign-ups'],
     analytics: ['Analytics', 'Charts and chapter-wise insights'],
     reports: ['Reports', 'Export data and generate reports']
   };
@@ -99,6 +102,7 @@
     $('#viewSub').textContent = t[1];
     $('#sidebar').classList.remove('open');
     if (v === 'analytics') renderAnalytics();
+    if (v === 'volunteers') loadVolunteers();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -458,6 +462,94 @@
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   }
   function stamp() { return new Date().toISOString().slice(0, 10); }
+
+  /* ---------------- Volunteers (signup approval) ---------------- */
+  let VOLS = [];
+  function initVolunteers() {
+    let deb;
+    $('#volSearch').addEventListener('input', () => { clearTimeout(deb); deb = setTimeout(renderVolunteers, 200); });
+    $('#volFilterStatus').addEventListener('change', renderVolunteers);
+    $('#volFilterChapter').addEventListener('change', renderVolunteers);
+    $('#volRefresh').onclick = () => { loadVolunteers(); toast('Refreshing', 'Fetching volunteers.', 'info', 1500); };
+  }
+  async function loadVolunteers() {
+    try {
+      if (CFG.DEMO_MODE) {
+        VOLS = demoVolunteers();
+      } else {
+        const res = await fetch(`${CFG.API_URL}?action=listVolunteers&token=${encodeURIComponent(ADMIN.token)}`);
+        const data = await res.json();
+        if (!data || data.status !== 'success') throw new Error(data && data.message || 'Load failed');
+        VOLS = data.volunteers || [];
+      }
+      renderVolunteers();
+      updateVolBadge();
+    } catch (err) { toast('Could not load volunteers', err.message, 'error', 5000); }
+  }
+  function updateVolBadge() {
+    const pending = VOLS.filter(v => v.status === 'Pending').length;
+    const b = $('#volPendingBadge'); if (b) b.textContent = pending ? String(pending) : '';
+  }
+  function renderVolunteers() {
+    const q = ($('#volSearch') && $('#volSearch').value || '').toLowerCase().trim();
+    const st = ($('#volFilterStatus') && $('#volFilterStatus').value) || '';
+    const ch = ($('#volFilterChapter') && $('#volFilterChapter').value) || '';
+    const rows = VOLS.filter(v => {
+      if (st && v.status !== st) return false;
+      if (ch && v.chapter !== ch) return false;
+      if (q && !(`${v.name} ${v.email} ${v.phone} ${v.chapter}`.toLowerCase().includes(q))) return false;
+      return true;
+    });
+    const body = $('#volBody');
+    $('#volEmpty').classList.toggle('d-none', rows.length > 0);
+    body.innerHTML = rows.map((v, i) => `
+      <tr data-i="${i}">
+        <td><small>${esc(v.timestamp || '')}</small></td>
+        <td class="vol-cell"><strong>${esc(v.name)}</strong><small>${esc(v.role || 'Volunteer')}</small></td>
+        <td>${esc(v.email)}</td>
+        <td>${esc(v.phone)}</td>
+        <td><span class="chip-chapter">${esc(v.chapter)}</span></td>
+        <td><span class="badge-status ${esc(v.status)}">${esc(v.status)}</span></td>
+        <td class="text-center"><span class="row-actions">
+          <button class="act-btn ok" data-act="approve" title="Approve"><i class="fa-solid fa-check"></i></button>
+          <button class="act-btn no" data-act="reject" title="Reject"><i class="fa-solid fa-xmark"></i></button>
+        </span></td>
+      </tr>`).join('');
+    $$('#volBody tr').forEach(tr => {
+      const rec = rows[+tr.dataset.i];
+      tr.querySelectorAll('[data-act]').forEach(b => b.onclick = () =>
+        setVolStatus(rec, b.dataset.act === 'approve' ? 'Approved' : 'Rejected'));
+    });
+  }
+  async function setVolStatus(rec, status) {
+    const prev = rec.status;
+    rec.status = status; renderVolunteers(); updateVolBadge();
+    try {
+      if (CFG.DEMO_MODE) persistDemoVol(rec.email, status);
+      else {
+        const url = `${CFG.API_URL}?action=setVolStatus&rowIndex=${encodeURIComponent(rec.rowIndex)}` +
+          `&status=${encodeURIComponent(status)}&token=${encodeURIComponent(ADMIN.token)}`;
+        const res = await fetch(url); const data = await res.json();
+        if (!data || data.status !== 'success') throw new Error(data && data.message || 'Update failed');
+      }
+      toast(status, `${rec.name} marked ${status.toLowerCase()}.`, status === 'Approved' ? 'success' : 'info');
+    } catch (err) { rec.status = prev; renderVolunteers(); updateVolBadge(); toast('Update failed', err.message, 'error', 5000); }
+  }
+  function demoVolunteers() {
+    try {
+      return (JSON.parse(localStorage.getItem('hcf_demo_volunteers') || '[]')).map((v, i) => ({
+        rowIndex: i + 2, timestamp: v.timestamp || '', name: v.name, email: v.email, phone: v.phone,
+        chapter: v.chapter, status: v.status || 'Pending', role: v.role || 'Volunteer'
+      }));
+    } catch (e) { return []; }
+  }
+  function persistDemoVol(email, status) {
+    try {
+      const list = JSON.parse(localStorage.getItem('hcf_demo_volunteers') || '[]');
+      const item = list.find(x => x.email.toLowerCase() === String(email).toLowerCase());
+      if (item) { item.status = status; localStorage.setItem('hcf_demo_volunteers', JSON.stringify(list)); }
+    } catch (e) {}
+  }
 
   /* ---------------- Demo data ---------------- */
   function demoData() {

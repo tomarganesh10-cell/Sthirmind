@@ -44,16 +44,22 @@ const HEADERS = [
   'Remarks', 'Bills Link', 'Photos Link', 'Bills Count', 'Photos Count', 'Status'
 ];
 
+// Volunteer accounts sheet (signup + admin approval)
+const VOL_SHEET = 'Volunteers';
+const VOL_HEADERS = ['Timestamp', 'Name', 'Email', 'Phone', 'Chapter', 'PasswordHash', 'Status', 'Role'];
+
 /* ============================ ROUTER ============================ */
 function doGet(e) {
   const action = (e && e.parameter && e.parameter.action) || 'ping';
   try {
     switch (action) {
-      case 'stats':       return json({ status: 'success', stats: getStats() });
-      case 'list':        return json({ status: 'success', activities: listActivities(e.parameter) });
-      case 'setStatus':   return json(setStatus(e.parameter));
-      case 'ping':        return json({ status: 'success', message: 'HCF API online', time: new Date().toISOString() });
-      default:            return json({ status: 'error', message: 'Unknown action: ' + action });
+      case 'stats':          return json({ status: 'success', stats: getStats() });
+      case 'list':           return json({ status: 'success', activities: listActivities(e.parameter) });
+      case 'setStatus':      return json(setStatus(e.parameter));
+      case 'listVolunteers': return json({ status: 'success', volunteers: listVolunteers(e.parameter) });
+      case 'setVolStatus':   return json(setVolStatus(e.parameter));
+      case 'ping':           return json({ status: 'success', message: 'HCF API online', time: new Date().toISOString() });
+      default:               return json({ status: 'error', message: 'Unknown action: ' + action });
     }
   } catch (err) {
     return json({ status: 'error', message: String(err && err.message || err) });
@@ -66,6 +72,9 @@ function doPost(e) {
     const action = body.action || 'submitActivity';
     if (action === 'submitActivity') return json(submitActivity(body.payload || {}));
     if (action === 'setStatus')      return json(setStatus(body));
+    if (action === 'signup')         return json(signupVolunteer(body.payload || {}));
+    if (action === 'login')          return json(loginVolunteer(body.payload || {}));
+    if (action === 'setVolStatus')   return json(setVolStatus(body));
     return json({ status: 'error', message: 'Unknown action: ' + action });
   } catch (err) {
     return json({ status: 'error', message: String(err && err.message || err) });
@@ -276,6 +285,138 @@ function setStatus(params) {
   const statusCol = HEADERS.indexOf('Status') + 1;
   sheet.getRange(rowIndex, statusCol).setValue(newStatus);
   return { status: 'success', message: 'Status updated to ' + newStatus, rowIndex: rowIndex };
+}
+
+/* ==================== VOLUNTEER AUTH ========================= */
+function getVolSheet() {
+  const ss = getSpreadsheet();
+  let sheet = ss.getSheetByName(VOL_SHEET);
+  if (!sheet) sheet = ss.insertSheet(VOL_SHEET);
+  if (sheet.getLastRow() === 0) {
+    sheet.getRange(1, 1, 1, VOL_HEADERS.length).setValues([VOL_HEADERS])
+      .setFontWeight('bold').setBackground(CONFIG.BRAND_PRIMARY).setFontColor('#ffffff');
+    sheet.setFrozenRows(1);
+  }
+  return sheet;
+}
+
+function hashPw(email, password) {
+  const raw = String(email).toLowerCase() + '|' + String(password) + '|' + CONFIG.ADMIN_TOKEN;
+  return Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, raw));
+}
+function makeToken(email) {
+  const raw = String(email).toLowerCase() + '|' + CONFIG.ADMIN_TOKEN;
+  return Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, raw));
+}
+
+function findVolByEmail(email) {
+  const sheet = getVolSheet();
+  const last = sheet.getLastRow();
+  if (last < 2) return null;
+  const data = sheet.getRange(2, 1, last - 1, VOL_HEADERS.length).getValues();
+  const target = String(email).toLowerCase().trim();
+  for (let i = 0; i < data.length; i++) {
+    if (String(data[i][2]).toLowerCase().trim() === target) {
+      return { rowIndex: i + 2, row: data[i] };
+    }
+  }
+  return null;
+}
+
+function signupVolunteer(p) {
+  const clean = s => String(s == null ? '' : s).replace(/[\x00-\x1F\x7F]/g, '').trim().slice(0, 200);
+  const name = clean(p.name), email = clean(p.email).toLowerCase(), phone = clean(p.phone), chapter = clean(p.chapter);
+  const password = String(p.password || '');
+  if (!name || !email || !phone || !chapter || !password) return { status: 'error', message: 'All fields are required.' };
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { status: 'error', message: 'Invalid email.' };
+  if (!/^\d{10}$/.test(phone)) return { status: 'error', message: 'Phone must be 10 digits.' };
+  if (password.length < 6) return { status: 'error', message: 'Password must be at least 6 characters.' };
+  if (findVolByEmail(email)) return { status: 'error', message: 'An account with this email already exists.' };
+
+  const sheet = getVolSheet();
+  sheet.appendRow([new Date(), name, email, phone, chapter, hashPw(email, password), 'Pending', 'Volunteer']);
+
+  // Notify admin of new signup
+  try {
+    MailApp.sendEmail({
+      to: CONFIG.ADMIN_EMAIL,
+      subject: '🙋 New volunteer signup — approval needed: ' + name,
+      htmlBody: '<div style="font-family:Arial,sans-serif">' +
+        '<h3 style="color:' + CONFIG.BRAND_PRIMARY + '">New Volunteer Signup</h3>' +
+        '<p><b>Name:</b> ' + esc(name) + '<br><b>Email:</b> ' + esc(email) +
+        '<br><b>Phone:</b> ' + esc(phone) + '<br><b>Chapter:</b> ' + esc(chapter) + '</p>' +
+        '<p>Open the Admin Dashboard → Volunteers to approve or reject.</p>' +
+        '<a href="' + getSpreadsheet().getUrl() + '" style="background:' + CONFIG.BRAND_GOLD +
+        ';color:#1c1403;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:700">Open Sheet</a></div>',
+      name: CONFIG.ORG_NAME + ' Portal'
+    });
+  } catch (mailErr) { /* non-fatal */ }
+
+  return { status: 'success', message: 'Signup received. Your account is pending admin approval.' };
+}
+
+function loginVolunteer(p) {
+  const email = String(p.email || '').toLowerCase().trim();
+  const password = String(p.password || '');
+  if (!email || !password) return { status: 'error', message: 'Email and password required.' };
+  const found = findVolByEmail(email);
+  if (!found) return { status: 'error', message: 'No account found. Please sign up first.' };
+  const [, name, , phone, chapter, hash, vstatus] = found.row;
+  if (hash !== hashPw(email, password)) return { status: 'error', message: 'Incorrect password.' };
+  if (vstatus === 'Pending') return { status: 'pending', message: 'Your account is awaiting admin approval.' };
+  if (vstatus === 'Rejected') return { status: 'rejected', message: 'Your account request was not approved. Please contact the admin.' };
+  return {
+    status: 'success', message: 'Welcome back!',
+    token: makeToken(email),
+    volunteer: { name: name, email: email, phone: phone, chapter: chapter, role: found.row[7] || 'Volunteer' }
+  };
+}
+
+function listVolunteers(params) {
+  if (!params || params.token !== CONFIG.ADMIN_TOKEN) return [];
+  const sheet = getVolSheet();
+  const last = sheet.getLastRow();
+  if (last < 2) return [];
+  const tz = Session.getScriptTimeZone();
+  const data = sheet.getRange(2, 1, last - 1, VOL_HEADERS.length).getValues();
+  return data.map((r, i) => ({
+    rowIndex: i + 2,
+    timestamp: r[0] instanceof Date ? Utilities.formatDate(r[0], tz, 'yyyy-MM-dd HH:mm') : String(r[0]),
+    name: r[1], email: r[2], phone: r[3], chapter: r[4], status: r[6] || 'Pending', role: r[7] || 'Volunteer'
+  })).reverse();
+}
+
+function setVolStatus(params) {
+  if (!params || params.token !== CONFIG.ADMIN_TOKEN) return { status: 'error', message: 'Unauthorized' };
+  const rowIndex = parseInt(params.rowIndex, 10);
+  const newStatus = params.status;
+  if (!rowIndex || ['Approved', 'Rejected', 'Pending'].indexOf(newStatus) === -1) {
+    return { status: 'error', message: 'Invalid status request' };
+  }
+  const sheet = getVolSheet();
+  const statusCol = VOL_HEADERS.indexOf('Status') + 1;
+  sheet.getRange(rowIndex, statusCol).setValue(newStatus);
+
+  // Notify the volunteer of the decision
+  try {
+    const email = sheet.getRange(rowIndex, VOL_HEADERS.indexOf('Email') + 1).getValue();
+    const name = sheet.getRange(rowIndex, VOL_HEADERS.indexOf('Name') + 1).getValue();
+    if (email && (newStatus === 'Approved' || newStatus === 'Rejected')) {
+      const approved = newStatus === 'Approved';
+      MailApp.sendEmail({
+        to: email,
+        subject: approved ? '✅ Your HCF volunteer account is approved' : 'HCF volunteer account update',
+        htmlBody: '<div style="font-family:Arial,sans-serif"><h3 style="color:' + CONFIG.BRAND_PRIMARY + '">Hi ' + esc(name) + ',</h3>' +
+          (approved
+            ? '<p>Your Hope Commoners Foundation volunteer account has been <b>approved</b>. You can now log in and start uploading activities.</p>'
+            : '<p>Your volunteer account request was not approved at this time. Please contact the team for details.</p>') +
+          '</div>',
+        name: CONFIG.ORG_NAME + ' Portal'
+      });
+    }
+  } catch (mailErr) { /* non-fatal */ }
+
+  return { status: 'success', message: 'Volunteer marked ' + newStatus, rowIndex: rowIndex };
 }
 
 /* ==================== SHEET / DRIVE HELPERS ================== */

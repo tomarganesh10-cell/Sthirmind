@@ -99,6 +99,10 @@ a { text-decoration: none; }
   box-shadow: var(--shadow-sm);
 }
 .brand-logo.sm { width: 38px; height: 38px; font-size: 17px; border-radius: 12px; }
+.brand-logo { position: relative; overflow: hidden; }
+.brand-logo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: #fff; }
+.vol-chip { display: inline-flex; align-items: center; padding: 8px 14px; border-radius: 999px;
+  background: rgba(31,157,99,.14); color: #157a4b; font-weight: 600; font-size: .84rem; }
 .brand-text { display: flex; flex-direction: column; line-height: 1.05; }
 .brand-name { font-weight: 700; font-size: 1.02rem; }
 .brand-sub { font-size: .72rem; color: var(--secondary-600); font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
