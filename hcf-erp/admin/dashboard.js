@@ -113,7 +113,7 @@
       if (CFG.DEMO_MODE) {
         ALL = demoData();
       } else {
-        const res = await fetch(CFG.API_URL + '?action=list');
+        const res = await fetch(CFG.API_URL + '?action=list&_=' + Date.now());
         const data = await res.json();
         if (!data || data.status !== 'success') throw new Error(data && data.message || 'Load failed');
         ALL = data.activities || [];
@@ -318,7 +318,7 @@
         persistDemoStatus(rec.activityId, status);
       } else {
         const url = `${CFG.API_URL}?action=setStatus&rowIndex=${encodeURIComponent(rec.rowIndex)}` +
-          `&status=${encodeURIComponent(status)}&token=${encodeURIComponent(ADMIN.token)}`;
+          `&status=${encodeURIComponent(status)}&token=${encodeURIComponent(ADMIN.token)}&_=${Date.now()}`;
         const res = await fetch(url);
         const data = await res.json();
         if (!data || data.status !== 'success') throw new Error(data && data.message || 'Update failed');
@@ -477,7 +477,7 @@
       if (CFG.DEMO_MODE) {
         VOLS = demoVolunteers();
       } else {
-        const res = await fetch(`${CFG.API_URL}?action=listVolunteers&token=${encodeURIComponent(ADMIN.token)}`);
+        const res = await fetch(`${CFG.API_URL}?action=listVolunteers&token=${encodeURIComponent(ADMIN.token)}&_=${Date.now()}`);
         const data = await res.json();
         if (!data || data.status !== 'success') throw new Error(data && data.message || 'Load failed');
         VOLS = data.volunteers || [];
@@ -528,7 +528,7 @@
       if (CFG.DEMO_MODE) persistDemoVol(rec.email, status);
       else {
         const url = `${CFG.API_URL}?action=setVolStatus&rowIndex=${encodeURIComponent(rec.rowIndex)}` +
-          `&status=${encodeURIComponent(status)}&token=${encodeURIComponent(ADMIN.token)}`;
+          `&status=${encodeURIComponent(status)}&token=${encodeURIComponent(ADMIN.token)}&_=${Date.now()}`;
         const res = await fetch(url); const data = await res.json();
         if (!data || data.status !== 'success') throw new Error(data && data.message || 'Update failed');
       }

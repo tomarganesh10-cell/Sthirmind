@@ -475,7 +475,7 @@
     let stats = { meals: 12840, volunteers: 260, activities: 415, chapters: 6 };
     if (!CFG.DEMO_MODE) {
       try {
-        const res = await fetch(CFG.API_URL + '?action=stats');
+        const res = await fetch(CFG.API_URL + '?action=stats&_=' + Date.now());
         const data = await res.json();
         if (data && data.status === 'success' && data.stats) stats = data.stats;
       } catch (e) { /* fall back to defaults */ }
