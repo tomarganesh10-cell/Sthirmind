@@ -100,7 +100,7 @@ a { text-decoration: none; }
 }
 .brand-logo.sm { width: 38px; height: 38px; font-size: 17px; border-radius: 12px; }
 .brand-logo { position: relative; overflow: hidden; }
-.brand-logo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: #fff; }
+.brand-logo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #fff; padding: 3px; }
 .vol-chip { display: inline-flex; align-items: center; padding: 8px 14px; border-radius: 999px;
   background: rgba(31,157,99,.14); color: #157a4b; font-weight: 600; font-size: .84rem; }
 .brand-text { display: flex; flex-direction: column; line-height: 1.05; }
