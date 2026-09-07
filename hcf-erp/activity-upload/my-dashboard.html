@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0B3D2E" />
+  <title>My Dashboard | Hope Commoners Foundation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .dash-main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 60px; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 22px; }
+    .kpi { display: flex; align-items: center; gap: 15px; padding: 18px 20px; }
+    .kpi .ic { width: 50px; height: 50px; flex: 0 0 50px; border-radius: 14px; display: grid; place-items: center; font-size: 20px; color: #fff; }
+    .kpi .ic.g { background: linear-gradient(135deg, var(--primary), #14664c); }
+    .kpi .ic.gold { background: linear-gradient(135deg, var(--secondary), #b8860b); color: #1c1403; }
+    .kpi .ic.t { background: linear-gradient(135deg, #2f7a5f, #1f9d63); }
+    .kpi .ic.a { background: linear-gradient(135deg, #e0951f, #c47a10); }
+    .kpi small { color: var(--muted); font-size: .8rem; display: block; }
+    .kpi strong { font-size: 1.55rem; color: var(--primary); line-height: 1.1; }
+    .panel { padding: 20px; }
+    .panel-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+    .panel-head h3 { font-size: 1.05rem; color: var(--primary); display: flex; align-items: center; gap: 9px; margin: 0; }
+    .panel-head h3 i { color: var(--secondary-600); }
+    .scope-toggle { display: inline-flex; background: rgba(11,61,46,.06); border-radius: 10px; padding: 3px; }
+    .scope-toggle button { border: none; background: none; padding: 7px 14px; border-radius: 8px; font-weight: 600; font-size: .84rem; color: var(--muted); cursor: pointer; }
+    .scope-toggle button.active { background: #fff; color: var(--primary); box-shadow: var(--shadow-sm); }
+    .role-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; font-size: .78rem; font-weight: 700; background: rgba(212,175,55,.18); color: var(--secondary-600); }
+    .tbl-wrap { overflow-x: auto; }
+    table.t { width: 100%; border-collapse: collapse; min-width: 720px; }
+    table.t th { text-align: left; font-size: .74rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); padding: 12px 14px; border-bottom: 2px solid var(--line); }
+    table.t td { padding: 12px 14px; border-bottom: 1px solid var(--line); font-size: .9rem; }
+    .text-end { text-align: right; } .text-center { text-align: center; }
+    .badge-status { display: inline-flex; padding: 5px 11px; border-radius: 999px; font-size: .74rem; font-weight: 600; }
+    .badge-status.Pending { background: rgba(224,149,31,.15); color: #b06f0f; }
+    .badge-status.Approved { background: rgba(31,157,99,.15); color: #157a4b; }
+    .badge-status.Rejected { background: rgba(215,67,59,.15); color: #b6322b; }
+    .mini-btn { border: none; border-radius: 9px; padding: 7px 12px; font-size: .78rem; font-weight: 600; cursor: pointer; }
+    .mini-btn.req { background: rgba(11,61,46,.08); color: var(--primary); }
+    .mini-btn.req:hover { background: var(--primary); color: #fff; }
+    .mini-btn.edit { background: var(--secondary); color: #1c1403; }
+    .mini-btn.wait { background: rgba(224,149,31,.15); color: #b06f0f; cursor: default; }
+    .empty { text-align: center; padding: 50px 20px; color: var(--muted); }
+    .empty i { font-size: 40px; color: var(--line); display: block; margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+  <div class="bg-canvas" aria-hidden="true"><span class="blob blob-1"></span><span class="blob blob-2"></span><span class="blob blob-3"></span><div class="grid-overlay"></div></div>
+
+  <header class="app-header">
+    <div class="container-xl d-flex align-items-center justify-content-between">
+      <a class="brand" href="index.html">
+        <span class="brand-logo"><img src="../assets/logo.png" alt="HCF" onerror="this.remove()"><i class="fa-solid fa-hands-holding-heart"></i></span>
+        <span class="brand-text"><span class="brand-name">Hope Commoners</span><span class="brand-sub">My Dashboard</span></span>
+      </a>
+      <nav class="header-actions d-flex align-items-center gap-2">
+        <span class="role-badge" id="roleBadge"><i class="fa-solid fa-user"></i> <span id="roleTxt">Volunteer</span></span>
+        <a class="btn-ghost" href="index.html"><i class="fa-solid fa-cloud-arrow-up me-2"></i><span class="d-none d-sm-inline">Upload</span></a>
+        <button class="btn-ghost" id="logoutBtn"><i class="fa-solid fa-right-from-bracket me-2"></i><span class="d-none d-sm-inline">Logout</span></button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="dash-main">
+    <h1 style="color:var(--primary);font-size:1.5rem;margin:6px 0 4px" id="hello">My Activity Dashboard</h1>
+    <p style="color:var(--muted);margin-bottom:22px">Everything you've submitted — meals, bills and status — in one place.</p>
+
+    <div class="kpi-grid" id="kpis">
+      <div class="glass kpi"><div class="ic g"><i class="fa-solid fa-calendar-check"></i></div><div><small>Activities Done</small><strong data-k="activities">0</strong></div></div>
+      <div class="glass kpi"><div class="ic t"><i class="fa-solid fa-bowl-food"></i></div><div><small>Meals Distributed</small><strong data-k="meals">0</strong></div></div>
+      <div class="glass kpi"><div class="ic gold"><i class="fa-solid fa-file-invoice"></i></div><div><small>Bills Submitted</small><strong data-k="billsCount">0</strong></div></div>
+      <div class="glass kpi"><div class="ic a"><i class="fa-solid fa-indian-rupee-sign"></i></div><div><small>Bills Value</small><strong data-k="billsValue" data-money="1">₹0</strong></div></div>
+    </div>
+
+    <div class="glass panel">
+      <div class="panel-head">
+        <h3><i class="fa-solid fa-list-check"></i> My Submissions</h3>
+        <div class="d-flex align-items-center gap-2">
+          <div class="scope-toggle" id="scopeToggle" hidden>
+            <button data-scope="me" class="active">My submissions</button>
+            <button data-scope="chapter">Whole chapter</button>
+          </div>
+          <button class="btn btn-ghost-dark" id="refreshBtn"><i class="fa-solid fa-rotate"></i></button>
+        </div>
+      </div>
+      <div class="tbl-wrap">
+        <table class="t">
+          <thead><tr><th>Date</th><th>Activity</th><th class="text-end">Meals</th><th class="text-end">Expense</th><th class="text-center">Files</th><th>Status</th><th class="text-center">Correction</th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+        <div class="empty" id="empty" hidden><i class="fa-solid fa-inbox"></i>No submissions yet. <a href="index.html">Upload your first activity →</a></div>
+      </div>
+    </div>
+  </main>
+
+  <div class="toast-host" id="toastHost"></div>
+
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script src="my-dashboard.js"></script>
+</body>
+</html>

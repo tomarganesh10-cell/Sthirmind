@@ -60,6 +60,7 @@
         <a class="side-link active" data-view="overview"><i class="fa-solid fa-gauge-high"></i> Overview</a>
         <a class="side-link" data-view="activities"><i class="fa-solid fa-list-check"></i> Activities</a>
         <a class="side-link" data-view="volunteers"><i class="fa-solid fa-user-check"></i> Volunteers <span class="nav-badge" id="volPendingBadge"></span></a>
+        <a class="side-link" data-view="editrequests"><i class="fa-solid fa-pen-to-square"></i> Edit Requests <span class="nav-badge" id="editPendingBadge"></span></a>
         <a class="side-link" data-view="analytics"><i class="fa-solid fa-chart-pie"></i> Analytics</a>
         <a class="side-link" data-view="reports"><i class="fa-solid fa-file-export"></i> Reports</a>
       </nav>
@@ -250,6 +251,34 @@
             <div class="empty-state d-none" id="volEmpty">
               <i class="fa-solid fa-user-slash"></i>
               <p>No volunteer signups yet.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== EDIT REQUESTS VIEW ===== -->
+        <section class="view" data-view="editrequests">
+          <div class="glass toolbar">
+            <div class="search-box">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input type="search" id="edSearch" placeholder="Search activity, email, chapter…" />
+            </div>
+            <select id="edFilterStatus" class="filter-select">
+              <option value="">All Status</option>
+              <option>Pending</option><option>Approved</option><option>Rejected</option><option>Completed</option>
+            </select>
+            <div class="toolbar-spacer"></div>
+            <button class="btn btn-ghost-dark" id="edRefresh"><i class="fa-solid fa-rotate me-2"></i>Refresh</button>
+          </div>
+          <div class="glass table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr><th>Requested</th><th>Activity ID</th><th>By</th><th>Chapter</th><th>Reason</th><th>Status</th><th class="text-center">Action</th></tr>
+              </thead>
+              <tbody id="edBody"></tbody>
+            </table>
+            <div class="empty-state d-none" id="edEmpty">
+              <i class="fa-solid fa-clipboard-check"></i>
+              <p>No edit requests.</p>
             </div>
           </div>
         </section>

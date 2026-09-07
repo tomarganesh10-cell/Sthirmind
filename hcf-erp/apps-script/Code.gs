@@ -48,18 +48,27 @@ const HEADERS = [
 const VOL_SHEET = 'Volunteers';
 const VOL_HEADERS = ['Timestamp', 'Name', 'Email', 'Phone', 'Chapter', 'PasswordHash', 'Status', 'Role'];
 
+// Edit-request workflow sheet
+const EDIT_SHEET = 'EditRequests';
+const EDIT_HEADERS = ['Timestamp', 'Activity ID', 'Requested By', 'Chapter', 'Reason', 'Status']; // Status: Pending | Approved | Rejected | Completed
+
+function sanitize(s) { return String(s == null ? '' : s).replace(/[\x00-\x1F\x7F]/g, '').trim().slice(0, 2000); }
+
 /* ============================ ROUTER ============================ */
 function doGet(e) {
   const action = (e && e.parameter && e.parameter.action) || 'ping';
   try {
     switch (action) {
-      case 'stats':          return json({ status: 'success', stats: getStats() });
-      case 'list':           return json({ status: 'success', activities: listActivities(e.parameter) });
-      case 'setStatus':      return json(setStatus(e.parameter));
-      case 'listVolunteers': return json({ status: 'success', volunteers: listVolunteers(e.parameter) });
-      case 'setVolStatus':   return json(setVolStatus(e.parameter));
-      case 'ping':           return json({ status: 'success', message: 'HCF API online', time: new Date().toISOString() });
-      default:               return json({ status: 'error', message: 'Unknown action: ' + action });
+      case 'stats':            return json({ status: 'success', stats: getStats() });
+      case 'list':             return json({ status: 'success', activities: listActivities(e.parameter) });
+      case 'setStatus':        return json(setStatus(e.parameter));
+      case 'listVolunteers':   return json({ status: 'success', volunteers: listVolunteers(e.parameter) });
+      case 'setVolStatus':     return json(setVolStatus(e.parameter));
+      case 'setVolRole':       return json(setVolRole(e.parameter));
+      case 'listEditRequests': return json({ status: 'success', requests: listEditRequests(e.parameter) });
+      case 'setEditStatus':    return json(setEditStatus(e.parameter));
+      case 'ping':             return json({ status: 'success', message: 'HCF API online', time: new Date().toISOString() });
+      default:                 return json({ status: 'error', message: 'Unknown action: ' + action });
     }
   } catch (err) {
     return json({ status: 'error', message: String(err && err.message || err) });
@@ -75,6 +84,11 @@ function doPost(e) {
     if (action === 'signup')         return json(signupVolunteer(body.payload || {}));
     if (action === 'login')          return json(loginVolunteer(body.payload || {}));
     if (action === 'setVolStatus')   return json(setVolStatus(body));
+    if (action === 'setVolRole')     return json(setVolRole(body));
+    if (action === 'myActivities')   return json(myActivities(body.payload || {}));
+    if (action === 'requestEdit')    return json(requestEdit(body.payload || {}));
+    if (action === 'updateActivity') return json(updateActivity(body.payload || {}));
+    if (action === 'setEditStatus')  return json(setEditStatus(body));
     return json({ status: 'error', message: 'Unknown action: ' + action });
   } catch (err) {
     return json({ status: 'error', message: String(err && err.message || err) });
@@ -417,6 +431,185 @@ function setVolStatus(params) {
   } catch (mailErr) { /* non-fatal */ }
 
   return { status: 'success', message: 'Volunteer marked ' + newStatus, rowIndex: rowIndex };
+}
+
+/* ============ ROLES / MY-DASHBOARD / EDIT REQUESTS ========== */
+function verifyUser(email, token) {
+  return !!email && !!token && makeToken(String(email).toLowerCase().trim()) === token;
+}
+function volInfo(email) {
+  const found = findVolByEmail(email);
+  if (!found) return { role: 'Volunteer', chapter: '', name: '' };
+  return { role: found.row[7] || 'Volunteer', chapter: found.row[4] || '', name: found.row[1] || '' };
+}
+
+/** Admin: change a volunteer's role (e.g. promote to "Chapter Head"). */
+function setVolRole(params) {
+  if (!params || params.token !== CONFIG.ADMIN_TOKEN) return { status: 'error', message: 'Unauthorized' };
+  const rowIndex = parseInt(params.rowIndex, 10);
+  const role = params.role;
+  if (!rowIndex || ['Volunteer', 'Chapter Head'].indexOf(role) === -1) return { status: 'error', message: 'Invalid role' };
+  getVolSheet().getRange(rowIndex, VOL_HEADERS.indexOf('Role') + 1).setValue(role);
+  return { status: 'success', message: 'Role set to ' + role };
+}
+
+function getEditSheet() {
+  const ss = getSpreadsheet();
+  let sheet = ss.getSheetByName(EDIT_SHEET);
+  if (!sheet) sheet = ss.insertSheet(EDIT_SHEET);
+  if (sheet.getLastRow() === 0) {
+    sheet.getRange(1, 1, 1, EDIT_HEADERS.length).setValues([EDIT_HEADERS])
+      .setFontWeight('bold').setBackground(CONFIG.BRAND_PRIMARY).setFontColor('#ffffff');
+    sheet.setFrozenRows(1);
+  }
+  return sheet;
+}
+/** Latest edit-request per Activity ID (row scan). */
+function latestEditReq(activityId) {
+  const sheet = getEditSheet();
+  const last = sheet.getLastRow();
+  if (last < 2) return null;
+  const data = sheet.getRange(2, 1, last - 1, EDIT_HEADERS.length).getValues();
+  let hit = null;
+  for (let i = 0; i < data.length; i++) {
+    if (String(data[i][1]) === String(activityId)) hit = { rowIndex: i + 2, requestedBy: data[i][2], status: data[i][5] };
+  }
+  return hit;
+}
+function findActivityById(activityId) {
+  const sheet = getSheet();
+  const last = sheet.getLastRow();
+  if (last < 2) return null;
+  const data = sheet.getRange(2, 1, last - 1, HEADERS.length).getValues();
+  for (let i = 0; i < data.length; i++) {
+    if (String(data[i][1]) === String(activityId)) return { rowIndex: i + 2, row: data[i] };
+  }
+  return null;
+}
+
+/** Volunteer / Chapter-Head personal dashboard data. */
+function myActivities(p) {
+  const email = String(p.email || '').toLowerCase().trim();
+  if (!verifyUser(email, p.token)) return { status: 'error', message: 'Unauthorized' };
+  const info = volInfo(email);
+  const all = listActivities({});
+  let rows;
+  if (p.scope === 'chapter' && info.role === 'Chapter Head') {
+    rows = all.filter(a => a.chapter === info.chapter);
+  } else {
+    rows = all.filter(a => String(a.email).toLowerCase() === email);
+  }
+  // attach edit state
+  const es = getEditSheet(); const lastE = es.getLastRow();
+  const emap = {};
+  if (lastE > 1) es.getRange(2, 1, lastE - 1, EDIT_HEADERS.length).getValues()
+    .forEach(r => { emap[String(r[1])] = r[5]; });
+  rows.forEach(a => { a.editState = emap[a.activityId] || ''; });
+
+  const totals = {
+    activities: rows.length,
+    meals: rows.reduce((s, a) => s + (a.meals || 0), 0),
+    volunteers: rows.reduce((s, a) => s + (a.volunteers || 0), 0),
+    billsValue: rows.reduce((s, a) => s + (a.actualExpense || 0), 0),
+    billsCount: rows.reduce((s, a) => s + (a.billsCount || 0), 0),
+    approved: rows.filter(a => a.status === 'Approved').length,
+    pending: rows.filter(a => a.status === 'Pending').length
+  };
+  return { status: 'success', role: info.role, chapter: info.chapter, name: info.name, totals: totals, activities: rows };
+}
+
+/** A volunteer requests permission to edit one of their entries. */
+function requestEdit(p) {
+  const email = String(p.email || '').toLowerCase().trim();
+  if (!verifyUser(email, p.token)) return { status: 'error', message: 'Unauthorized' };
+  if (!p.activityId || !p.reason) return { status: 'error', message: 'Activity and reason are required.' };
+  const act = findActivityById(p.activityId);
+  if (!act) return { status: 'error', message: 'Activity not found.' };
+  const info = volInfo(email);
+  const owns = String(act.row[4]).toLowerCase() === email || (info.role === 'Chapter Head' && act.row[5] === info.chapter);
+  if (!owns) return { status: 'error', message: 'This is not your entry.' };
+  const existing = latestEditReq(p.activityId);
+  if (existing && (existing.status === 'Pending' || existing.status === 'Approved'))
+    return { status: 'error', message: 'An edit request is already ' + existing.status.toLowerCase() + ' for this entry.' };
+  getEditSheet().appendRow([new Date(), p.activityId, email, act.row[5], sanitize(p.reason), 'Pending']);
+  try {
+    MailApp.sendEmail({
+      to: CONFIG.ADMIN_EMAIL,
+      subject: '✏️ Edit request: ' + p.activityId + ' (' + act.row[5] + ')',
+      htmlBody: '<div style="font-family:Arial,sans-serif"><h3 style="color:' + CONFIG.BRAND_PRIMARY + '">Edit Request</h3>' +
+        '<p><b>Activity:</b> ' + esc(p.activityId) + '<br><b>By:</b> ' + esc(email) +
+        '<br><b>Chapter:</b> ' + esc(act.row[5]) + '<br><b>Reason:</b> ' + esc(sanitize(p.reason)) + '</p>' +
+        '<p>Open Admin Dashboard → Edit Requests to approve or reject.</p></div>',
+      name: CONFIG.ORG_NAME + ' Portal'
+    });
+  } catch (e) { /* non-fatal */ }
+  return { status: 'success', message: 'Edit request sent for admin approval.' };
+}
+
+/** Admin: list edit requests. */
+function listEditRequests(params) {
+  if (!params || params.token !== CONFIG.ADMIN_TOKEN) return [];
+  const sheet = getEditSheet(); const last = sheet.getLastRow();
+  if (last < 2) return [];
+  const tz = Session.getScriptTimeZone();
+  return sheet.getRange(2, 1, last - 1, EDIT_HEADERS.length).getValues().map((r, i) => ({
+    rowIndex: i + 2,
+    timestamp: r[0] instanceof Date ? Utilities.formatDate(r[0], tz, 'yyyy-MM-dd HH:mm') : String(r[0]),
+    activityId: r[1], requestedBy: r[2], chapter: r[3], reason: r[4], status: r[5] || 'Pending'
+  })).reverse();
+}
+
+/** Admin: approve/reject an edit request. Approved = entry unlocked for its owner. */
+function setEditStatus(params) {
+  if (!params || params.token !== CONFIG.ADMIN_TOKEN) return { status: 'error', message: 'Unauthorized' };
+  const rowIndex = parseInt(params.rowIndex, 10);
+  const status = params.status;
+  if (!rowIndex || ['Approved', 'Rejected'].indexOf(status) === -1) return { status: 'error', message: 'Invalid request' };
+  const sheet = getEditSheet();
+  sheet.getRange(rowIndex, EDIT_HEADERS.indexOf('Status') + 1).setValue(status);
+  try {
+    const email = sheet.getRange(rowIndex, EDIT_HEADERS.indexOf('Requested By') + 1).getValue();
+    const actId = sheet.getRange(rowIndex, EDIT_HEADERS.indexOf('Activity ID') + 1).getValue();
+    if (email) MailApp.sendEmail({
+      to: email,
+      subject: (status === 'Approved' ? '✅ Edit approved: ' : 'Edit request update: ') + actId,
+      htmlBody: '<div style="font-family:Arial,sans-serif">' +
+        (status === 'Approved'
+          ? '<p>Your edit request for <b>' + esc(actId) + '</b> is <b>approved</b>. Open your dashboard → the entry now has an <b>Edit</b> button to repunch corrections.</p>'
+          : '<p>Your edit request for <b>' + esc(actId) + '</b> was not approved.</p>') + '</div>',
+      name: CONFIG.ORG_NAME + ' Portal'
+    });
+  } catch (e) { /* non-fatal */ }
+  return { status: 'success', message: 'Edit request ' + status };
+}
+
+/** Volunteer: repunch a previously-unlocked entry (text fields; files unchanged). */
+function updateActivity(p) {
+  const email = String(p.email || '').toLowerCase().trim();
+  if (!verifyUser(email, p.token)) return { status: 'error', message: 'Unauthorized' };
+  const act = findActivityById(p.activityId);
+  if (!act) return { status: 'error', message: 'Activity not found.' };
+  const req = latestEditReq(p.activityId);
+  if (!req || req.status !== 'Approved' || String(req.requestedBy).toLowerCase() !== email)
+    return { status: 'error', message: 'This entry is not unlocked for editing.' };
+
+  const num = n => { const v = parseFloat(n); return isFinite(v) ? v : 0; };
+  const expenseText = (p.expenses || []).map(x => sanitize(x.item) + ': ₹' + num(x.amount).toFixed(2)).join(' | ');
+  const sheet = getSheet(); const ri = act.rowIndex;
+  const set = (col1, val) => sheet.getRange(ri, col1).setValue(val); // col is 1-based
+  set(7, sanitize(p.activityDate)); set(8, sanitize(p.activityTime)); set(9, sanitize(p.activityName));
+  set(10, sanitize(p.location)); set(11, num(p.meals)); set(12, num(p.volunteers));
+  set(13, num(p.amountRequested)); set(14, num(p.actualExpense)); set(15, expenseText);
+  set(16, sanitize(p.description));
+  set(17, p.needFunds === 'Yes' ? 'Yes' : 'No'); set(18, p.needVolunteers === 'Yes' ? 'Yes' : 'No');
+  set(19, p.needFood === 'Yes' ? 'Yes' : 'No'); set(20, p.needTransport === 'Yes' ? 'Yes' : 'No');
+  set(21, p.needSponsors === 'Yes' ? 'Yes' : 'No'); set(22, sanitize(p.remarks));
+  set(HEADERS.indexOf('Status') + 1, 'Pending'); // re-review after edit
+  setEditStatusRow(req.rowIndex, 'Completed'); // re-lock
+  return { status: 'success', message: 'Entry updated and re-submitted for review.', activityId: p.activityId };
+}
+function setEditStatusRow(rowIndex, status) {
+  getEditSheet().getRange(rowIndex, EDIT_HEADERS.indexOf('Status') + 1).setValue(status);
 }
 
 /* ==================== SHEET / DRIVE HELPERS ================== */

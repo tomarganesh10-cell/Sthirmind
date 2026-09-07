@@ -75,15 +75,18 @@
     initModal();
     initExports();
     initVolunteers();
+    initEditRequests();
     loadData();
-    loadVolunteers(); // populate pending badge
+    loadVolunteers();     // populate pending badge
+    loadEditRequests();   // populate edit-request badge
   }
 
   /* ---------------- Navigation ---------------- */
   const TITLES = {
     overview: ['Overview', 'Live snapshot of foundation activity'],
     activities: ['Activities', 'Review, approve and manage submissions'],
-    volunteers: ['Volunteers', 'Approve or reject volunteer sign-ups'],
+    volunteers: ['Volunteers', 'Approve sign-ups and assign Chapter Heads'],
+    editrequests: ['Edit Requests', 'Unlock entries for volunteers to correct'],
     analytics: ['Analytics', 'Charts and chapter-wise insights'],
     reports: ['Reports', 'Export data and generate reports']
   };
@@ -103,6 +106,7 @@
     $('#sidebar').classList.remove('open');
     if (v === 'analytics') renderAnalytics();
     if (v === 'volunteers') loadVolunteers();
+    if (v === 'editrequests') loadEditRequests();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -511,15 +515,34 @@
         <td><span class="chip-chapter">${esc(v.chapter)}</span></td>
         <td><span class="badge-status ${esc(v.status)}">${esc(v.status)}</span></td>
         <td class="text-center"><span class="row-actions">
+          <button class="act-btn view" data-act="role" title="${v.role === 'Chapter Head' ? 'Make Volunteer' : 'Make Chapter Head'}"><i class="fa-solid fa-user-tie"></i></button>
           <button class="act-btn ok" data-act="approve" title="Approve"><i class="fa-solid fa-check"></i></button>
           <button class="act-btn no" data-act="reject" title="Reject"><i class="fa-solid fa-xmark"></i></button>
         </span></td>
       </tr>`).join('');
     $$('#volBody tr').forEach(tr => {
       const rec = rows[+tr.dataset.i];
-      tr.querySelectorAll('[data-act]').forEach(b => b.onclick = () =>
-        setVolStatus(rec, b.dataset.act === 'approve' ? 'Approved' : 'Rejected'));
+      tr.querySelectorAll('[data-act]').forEach(b => b.onclick = () => {
+        if (b.dataset.act === 'role') setVolRoleAction(rec, rec.role === 'Chapter Head' ? 'Volunteer' : 'Chapter Head');
+        else setVolStatus(rec, b.dataset.act === 'approve' ? 'Approved' : 'Rejected');
+      });
     });
+  }
+  async function setVolRoleAction(rec, role) {
+    const prev = rec.role; rec.role = role; renderVolunteers();
+    try {
+      if (CFG.DEMO_MODE) {
+        const list = JSON.parse(localStorage.getItem('hcf_demo_volunteers') || '[]');
+        const it = list.find(x => x.email.toLowerCase() === String(rec.email).toLowerCase());
+        if (it) { it.role = role; localStorage.setItem('hcf_demo_volunteers', JSON.stringify(list)); }
+      } else {
+        const url = `${CFG.API_URL}?action=setVolRole&rowIndex=${encodeURIComponent(rec.rowIndex)}` +
+          `&role=${encodeURIComponent(role)}&token=${encodeURIComponent(ADMIN.token)}&_=${Date.now()}`;
+        const res = await fetch(url); const data = await res.json();
+        if (!data || data.status !== 'success') throw new Error(data && data.message || 'Update failed');
+      }
+      toast('Role updated', `${rec.name} is now ${role}.`, 'success');
+    } catch (err) { rec.role = prev; renderVolunteers(); toast('Update failed', err.message, 'error', 5000); }
   }
   async function setVolStatus(rec, status) {
     const prev = rec.status;
@@ -549,6 +572,74 @@
       const item = list.find(x => x.email.toLowerCase() === String(email).toLowerCase());
       if (item) { item.status = status; localStorage.setItem('hcf_demo_volunteers', JSON.stringify(list)); }
     } catch (e) {}
+  }
+
+  /* ---------------- Edit requests ---------------- */
+  let EDITS = [];
+  function initEditRequests() {
+    let deb;
+    $('#edSearch').addEventListener('input', () => { clearTimeout(deb); deb = setTimeout(renderEdits, 200); });
+    $('#edFilterStatus').addEventListener('change', renderEdits);
+    $('#edRefresh').onclick = () => { loadEditRequests(); toast('Refreshing', 'Fetching edit requests.', 'info', 1500); };
+  }
+  async function loadEditRequests() {
+    try {
+      if (CFG.DEMO_MODE) { EDITS = []; }
+      else {
+        const res = await fetch(`${CFG.API_URL}?action=listEditRequests&token=${encodeURIComponent(ADMIN.token)}&_=${Date.now()}`);
+        const data = await res.json();
+        if (!data || data.status !== 'success') throw new Error(data && data.message || 'Load failed');
+        EDITS = data.requests || [];
+      }
+      renderEdits(); updateEditBadge();
+    } catch (err) { toast('Could not load edit requests', err.message, 'error', 5000); }
+  }
+  function updateEditBadge() {
+    const pending = EDITS.filter(e => e.status === 'Pending').length;
+    const b = $('#editPendingBadge'); if (b) b.textContent = pending ? String(pending) : '';
+  }
+  function renderEdits() {
+    const q = ($('#edSearch') && $('#edSearch').value || '').toLowerCase().trim();
+    const st = ($('#edFilterStatus') && $('#edFilterStatus').value) || '';
+    const rows = EDITS.filter(e => {
+      if (st && e.status !== st) return false;
+      if (q && !(`${e.activityId} ${e.requestedBy} ${e.chapter} ${e.reason}`.toLowerCase().includes(q))) return false;
+      return true;
+    });
+    const body = $('#edBody');
+    $('#edEmpty').classList.toggle('d-none', rows.length > 0);
+    body.innerHTML = rows.map((e, i) => {
+      const canAct = e.status === 'Pending';
+      return `<tr data-i="${i}">
+        <td><small>${esc(e.timestamp || '')}</small></td>
+        <td><small>${esc(e.activityId)}</small></td>
+        <td>${esc(e.requestedBy)}</td>
+        <td><span class="chip-chapter">${esc(e.chapter)}</span></td>
+        <td><small>${esc(e.reason)}</small></td>
+        <td><span class="badge-status ${e.status === 'Completed' ? 'Approved' : esc(e.status)}">${esc(e.status)}</span></td>
+        <td class="text-center"><span class="row-actions">
+          ${canAct ? `<button class="act-btn ok" data-act="approve" title="Approve (unlock)"><i class="fa-solid fa-lock-open"></i></button>
+          <button class="act-btn no" data-act="reject" title="Reject"><i class="fa-solid fa-xmark"></i></button>` : '<small style="color:var(--muted)">—</small>'}
+        </span></td>
+      </tr>`;
+    }).join('');
+    $$('#edBody tr').forEach(tr => {
+      const rec = rows[+tr.dataset.i];
+      tr.querySelectorAll('[data-act]').forEach(b => b.onclick = () =>
+        setEditDecision(rec, b.dataset.act === 'approve' ? 'Approved' : 'Rejected'));
+    });
+  }
+  async function setEditDecision(rec, status) {
+    const prev = rec.status; rec.status = status; renderEdits(); updateEditBadge();
+    try {
+      const url = `${CFG.API_URL}?action=setEditStatus&rowIndex=${encodeURIComponent(rec.rowIndex)}` +
+        `&status=${encodeURIComponent(status)}&token=${encodeURIComponent(ADMIN.token)}&_=${Date.now()}`;
+      const res = await fetch(url); const data = await res.json();
+      if (!data || data.status !== 'success') throw new Error(data && data.message || 'Update failed');
+      toast(status === 'Approved' ? 'Unlocked' : 'Rejected',
+        status === 'Approved' ? `${rec.requestedBy} can now edit ${rec.activityId}.` : `Request for ${rec.activityId} rejected.`,
+        status === 'Approved' ? 'success' : 'info');
+    } catch (err) { rec.status = prev; renderEdits(); updateEditBadge(); toast('Update failed', err.message, 'error', 5000); }
   }
 
   /* ---------------- Demo data ---------------- */

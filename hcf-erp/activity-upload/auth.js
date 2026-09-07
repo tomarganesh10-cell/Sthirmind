@@ -41,9 +41,43 @@
       if (v.password !== p.password) return { status: 'error', message: 'Incorrect password.' };
       if (v.status === 'Pending') return { status: 'pending', message: 'Your account is awaiting admin approval.' };
       if (v.status === 'Rejected') return { status: 'rejected', message: 'Your account was not approved.' };
-      return { status: 'success', token: 'demo', volunteer: { name: v.name, email: v.email, phone: v.phone, chapter: v.chapter, role: v.role } };
+      return { status: 'success', token: 'demo', volunteer: { name: v.name, email: v.email, phone: v.phone, chapter: v.chapter, role: v.role || 'Volunteer' } };
+    }
+    if (action === 'myActivities') {
+      let list = []; try { list = JSON.parse(localStorage.getItem('hcf_demo_activities') || '[]'); } catch (e) {}
+      const email = String(p.email || '').toLowerCase();
+      const rows = list.filter(a => String(a.email || '').toLowerCase() === email).map(a => ({
+        activityId: a.id, activityDate: a.activityDate, activityTime: a.activityTime, activity: a.activityName,
+        location: a.location, meals: a.meals || 0, volunteers: a.volunteers || 0,
+        amountRequested: a.amountRequested || 0, actualExpense: a.actualExpense || 0,
+        expenseBreakdown: (a.expenses || []).map(x => x.item + ': ₹' + x.amount).join(' | '),
+        description: a.description, remarks: a.remarks,
+        needFunds: a.needFunds, needVolunteers: a.needVolunteers, needFood: a.needFood, needTransport: a.needTransport, needSponsors: a.needSponsors,
+        billsCount: a.bills || 0, photosCount: a.photos || 0, status: a.status || 'Pending', editState: a.editState || ''
+      }));
+      const tot = { activities: rows.length, meals: 0, volunteers: 0, billsValue: 0, billsCount: 0, approved: 0, pending: 0 };
+      rows.forEach(a => { tot.meals += a.meals; tot.volunteers += a.volunteers; tot.billsValue += a.actualExpense; tot.billsCount += a.billsCount; if (a.status === 'Approved') tot.approved++; if (a.status === 'Pending') tot.pending++; });
+      return { status: 'success', role: 'Volunteer', chapter: '', totals: tot, activities: rows };
+    }
+    if (action === 'requestEdit' || action === 'updateActivity') {
+      try {
+        const list = JSON.parse(localStorage.getItem('hcf_demo_activities') || '[]');
+        const it = list.find(a => a.id === p.activityId);
+        if (it) {
+          if (action === 'requestEdit') it.editState = 'Approved'; // demo auto-approves so you can test
+          else { Object.assign(it, p); it.editState = 'Completed'; it.status = 'Pending'; }
+          localStorage.setItem('hcf_demo_activities', JSON.stringify(list));
+        }
+      } catch (e) {}
+      return { status: 'success', message: action === 'requestEdit' ? 'Edit request sent (demo auto-approved).' : 'Entry updated (demo).' };
     }
     return { status: 'error', message: 'demo: unknown action' };
+  }
+
+  function authPayload(extra) {
+    const u = HCFAuth.current() || {};
+    const v = u.volunteer || {};
+    return Object.assign({ email: v.email, token: u.token }, extra || {});
   }
 
   const HCFAuth = {
@@ -62,7 +96,10 @@
       const u = HCFAuth.current();
       if (!u || !u.volunteer) { location.replace('login.html'); return null; }
       return u.volunteer;
-    }
+    },
+    async myActivities(scope) { return post('myActivities', authPayload({ scope: scope || 'me' })); },
+    async requestEdit(activityId, reason) { return post('requestEdit', authPayload({ activityId: activityId, reason: reason })); },
+    async updateActivity(fields) { return post('updateActivity', authPayload(fields)); }
   };
   global.HCFAuth = HCFAuth;
 })(window);

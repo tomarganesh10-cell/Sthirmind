@@ -20,6 +20,7 @@
   /* ------------------------------------------------------------------ */
   const state = {
     step: 1,
+    editId: null, // set when repunching an unlocked entry
     bills: [],   // { id, file, name, type, isImage, dataUrl }
     photos: []   // { id, file, name, dataUrl }
   };
@@ -73,11 +74,70 @@
     initNeedsAnimation();
     initSubmit();
     loadLiveStats();
+    initEditMode();
 
     if (CFG.DEMO_MODE) {
       toast('Demo mode', 'API URL not set — submissions are simulated locally. See apps-script/README.md.', 'info', 6000);
     }
   });
+
+  /* ------------------------------------------------------------------ */
+  /* Edit / repunch mode  (index.html?edit=<activityId>)                 */
+  /* ------------------------------------------------------------------ */
+  async function initEditMode() {
+    const editId = new URLSearchParams(location.search).get('edit');
+    if (!editId || !window.HCFAuth) return;
+    let data;
+    try {
+      const r = await HCFAuth.myActivities('me');
+      const chapterR = (r && r.role === 'Chapter Head') ? await HCFAuth.myActivities('chapter') : null;
+      const pool = (chapterR && chapterR.activities) ? chapterR.activities : (r && r.activities) || [];
+      data = pool.find(a => String(a.activityId) === String(editId));
+    } catch (e) { /* ignore */ }
+    if (!data) { toast('Not found', 'That entry could not be loaded.', 'error'); return; }
+    if (data.editState !== 'Approved') {
+      toast('Locked', 'This entry is not unlocked for editing. Request an edit first.', 'error', 6000);
+      return;
+    }
+    state.editId = editId;
+    prefillFromActivity(data);
+    // Turn the form into "update" mode
+    const btn = $('#submitBtn');
+    if (btn) btn.innerHTML = '<i class="fa-solid fa-floppy-disk me-2"></i>Update Entry';
+    const head = document.querySelector('.hero .hero-title');
+    toast('Edit mode', 'Correct the details and click “Update Entry”. Files stay as they are.', 'info', 7000);
+    // jump to the form
+    gotoStep(1);
+  }
+
+  function prefillFromActivity(a) {
+    const set = (id, v) => { const el = $('#' + id); if (el != null && v != null) el.value = v; };
+    set('activityDate', a.activityDate); set('activityTime', a.activityTime);
+    set('location', a.location); set('meals', a.meals); set('volunteers', a.volunteers);
+    set('amountRequested', a.amountRequested); set('description', a.description); set('remarks', a.remarks);
+    // activity name → dropdown or "Other"
+    const known = ['Poha', 'Rajma Chawal', 'Veg Biryani', 'Kachori Sabji', 'Khichdi', 'Food Distribution'];
+    const sel = $('#activityName');
+    if (known.indexOf(a.activity) > -1) { sel.value = a.activity; }
+    else { sel.value = 'Other'; $('.activity-other').classList.remove('d-none'); $('#activityOther').value = a.activity || ''; $('#activityOther').required = true; }
+    // needs
+    const chk = (name, v) => { const el = document.querySelector('[name="' + name + '"]'); if (el) el.checked = (v === 'Yes'); };
+    chk('needFunds', a.needFunds); chk('needVolunteers', a.needVolunteers); chk('needFood', a.needFood);
+    chk('needTransport', a.needTransport); chk('needSponsors', a.needSponsors);
+    // expenses from "item: ₹amount | item2: ₹amount"
+    if (a.expenseBreakdown) {
+      $('#expenseBody').innerHTML = '';
+      String(a.expenseBreakdown).split('|').forEach(part => {
+        const m = part.split(':');
+        const item = (m[0] || '').trim();
+        const amt = (m[1] || '').replace(/[^\d.]/g, '');
+        if (item || amt) addExpenseRow(item, amt);
+      });
+      if (!$('#expenseBody').children.length) addExpenseRow();
+      recalcExpenses();
+    }
+    if ($('#description')) $('#descCount').textContent = ($('#description').value || '').length;
+  }
 
   /* ------------------------------------------------------------------ */
   /* Stepper navigation                                                  */
@@ -362,6 +422,24 @@
       if (!$('#consent').checked) { toast('Confirmation needed', 'Please confirm the declaration.', 'error'); return; }
 
       const payload = buildPayload();
+
+      // ----- EDIT / REPUNCH MODE -----
+      if (state.editId) {
+        showOverlay(true); setProgress(20, 'Updating your entry…');
+        try {
+          payload.activityId = state.editId;
+          const r = await HCFAuth.updateActivity(payload);
+          if (!r || r.status !== 'success') throw new Error(r && r.message || 'Update failed');
+          setProgress(100, 'Updated!');
+          toast('Entry updated', 'Your corrections were saved and sent for review.', 'success');
+          setTimeout(() => { location.href = 'my-dashboard.html'; }, 800);
+        } catch (err) {
+          showOverlay(false);
+          toast('Update failed', err.message || 'Please try again.', 'error', 7000);
+        }
+        return;
+      }
+
       showOverlay(true);
       setProgress(8, 'Preparing your report…');
 
